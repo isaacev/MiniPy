@@ -11,10 +11,12 @@ var MiniPy = (function(main) {
 		UNEXPECTED_CHAR: 7,
 		MALFORMED_NUMBER: 8,
 		UNSUPPORTED_OPERATION: 9,
+		TIMEOUT: 10,
 	};
 
 	var mods = {
 		MiniPyError: MiniPyError || null,
+		ErrorType: ErrorType,
 		Scanner: Scanner || null,
 		Lexer: Lexer || null,
 		Parser: Parser || null,
@@ -98,9 +100,9 @@ var MiniPy = (function(main) {
 				if (expression === null) {
 					break;
 				} else if (linesExecuted >= maxLinesExecuted) {
-					throw new mods.MiniPyError({
-						type: 'RuntimeError',
-						message: 'Script execution timed out, possibly because of an infinite loop',
+					throw new mods.MiniPyError(code, {
+						type: mods.ErrorType.TIMEOUT,
+						message: 'Script execution timed out, probably because of an excessively long loop',
 					});
 				}
 			}
