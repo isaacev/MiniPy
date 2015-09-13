@@ -57,7 +57,7 @@ var MiniPy = (function(main) {
 
 			return true;
 		} catch (err) {
-			throw err;
+			return err;
 		}
 	}
 
@@ -119,14 +119,10 @@ var MiniPy = (function(main) {
 			},
 
 			getScanner: function(code) {
-				code = addNewline(code);
-
 				return new mods.Scanner(code);
 			},
 
 			getLexer: function(code) {
-				code = addNewline(code);
-
 				var scanner = new mods.Scanner(code);
 				return new mods.Lexer(scanner);
 			},
