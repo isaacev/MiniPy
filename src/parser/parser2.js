@@ -358,8 +358,8 @@ var Parser = (function() {
 
 		infix('=', 10);
 
-		infix('&&', 30);
-		infix('||', 30);
+		infix('and', 30);
+		infix('or', 30);
 
 		infix('>', 30);
 		infix('>=', 30);
@@ -377,6 +377,7 @@ var Parser = (function() {
 
 		prefix('+', 70);
 		prefix('-', 70);
+		prefix('not', 70);
 		prefix('!', 70);
 
 		infix('(', new self.nodes.parselets.Call());

@@ -9,7 +9,6 @@ var Lexer = (function(Token) {
 		var punctuationCharacters = ',:()[]{}';
 
 		var keywords = [
-			'and',
 			'as',
 			'assert',
 			'break',
@@ -28,10 +27,7 @@ var Lexer = (function(Token) {
 			'if',
 			'import',
 			'in',
-			'is',
 			'lambda',
-			'not',
-			'or',
 			'pass',
 			// 'print',
 			'raise',
@@ -42,8 +38,19 @@ var Lexer = (function(Token) {
 			'yield',
 		];
 
+		var keywordOperators = [
+			'and',
+			'is',
+			'not',
+			'or',
+		];
+
 		var indentationStack = [0];
 		var buffer = [];
+
+		function isKeywordOperator(test) {
+			return keywordOperators.indexOf(test) >= 0;
+		}
 
 		function isKeyword(test) {
 			return keywords.indexOf(test) >= 0;
@@ -166,7 +173,9 @@ var Lexer = (function(Token) {
 							}
 						}
 
-						if (isKeyword(value)) {
+						if (isKeywordOperator(value)) {
+							type = 'Punctuator';
+						} else if (isKeyword(value)) {
 							type = 'Keyword';
 						} else if (isBooleanLiteral(value)) {
 							type = 'Boolean';

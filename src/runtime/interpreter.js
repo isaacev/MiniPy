@@ -167,6 +167,7 @@ var Interpreter = (function(Scope) {
 						case '-':
 							return -1 * right;
 						case '!':
+						case 'not':
 							return (right === false);
 						default:
 							throw ast.error({
@@ -251,9 +252,13 @@ var Interpreter = (function(Scope) {
 						case '<=':
 							return left <= right;
 						case '==':
-							return left == right;
+							return left === right;
+						case 'and':
+							return left === true === right;
 						case '!=':
-							return left != right;
+							return left !== right;
+						case 'or':
+							return left || right;
 						default:
 							throw ast.error({
 								type: 'SyntaxError',
