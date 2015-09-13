@@ -1,4 +1,4 @@
-// [MiniPy] /src/parser/Parser2.js
+// [MiniPy] /src/parser/Parser.js
 
 var Parser = (function() {
 	function Parser(lexer) {

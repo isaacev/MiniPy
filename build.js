@@ -10,7 +10,7 @@ var filenameMap = {
 	'scanner': './src/parser/scanner.js',
 	'token': './src/parser/token.js',
 	'lexer': './src/parser/lexer.js',
-	'parser': './src/parser/parser2.js',
+	'parser': './src/parser/parser.js',
 
 	'scope': './src/runtime/scope.js',
 	'interpreter': './src/runtime/interpreter.js',
