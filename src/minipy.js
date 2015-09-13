@@ -72,7 +72,7 @@ var MiniPy = (function(main) {
 		var parser = new mods.Parser(lexer);
 		var ast = parser.parse();
 
-		var globalVariables = {};
+		var globalVariables = opts.globals || {};
 		var inspector = mods.Interpreter(ast, globalVariables);
 
 		inspector.load(opts.hooks || defaultHooks);

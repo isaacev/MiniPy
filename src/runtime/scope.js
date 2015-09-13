@@ -11,7 +11,7 @@ var Scope = (function() {
 	};
 
 	Scope.prototype.isLocal = function(name) {
-		if (this.local.hasOwnProperty(name.toString())) {
+		if (this.local.hasOwnProperty(name)) {
 			return true;
 		} else {
 			return false;

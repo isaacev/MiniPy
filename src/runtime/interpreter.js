@@ -274,7 +274,27 @@ var Interpreter = (function(Scope) {
 							});
 					}
 				case 'CallExpression':
-					event('print', exec(node.arguments[0]));
+					var calleeIdentifier = node.callee.value;
+
+					if (calleeIdentifier === 'print') {
+						event('print', exec(node.arguments[0]));
+					} else {
+						// get identifier's value from scope
+						var fn = scope.get(calleeIdentifier);
+
+						if (typeof fn === 'function') {
+							// call global function
+							var executedArguments = node.arguments.map(exec);
+							return fn.apply({}, executedArguments);
+						} else {
+							// callee is not a function
+							node.callee.error({
+								type: ErrorType.UNSUPPORTED_OPERATION,
+								message: '"' + calleeIdentifier + '" is not a function',
+							});
+						}
+					}
+
 					break;
 				case 'IfStatement':
 					var condition = exec(node.condition);
