@@ -28,12 +28,11 @@ var MiniPyError = (function() {
 
 		// calculate padding
 		var totalPadding = spacedColumn;
-		var padding = mul(' ', totalPadding);
+		var padding = mul('-', totalPadding);
 
 		var underline = mul('^', width || 1);
 
-		console.log(spacedOffendingLine);
-		console.log(padding + underline);
+		return spacedOffendingLine + '\n' + (padding + underline);
 	}
 
 	function MiniPyError(source, details) {
@@ -42,6 +41,8 @@ var MiniPyError = (function() {
 
 		this.from = details.from || undefined;
 		this.to = details.to || undefined;
+
+		console.log(printOffense(source, this.from.line, this.from.column, this.to.column - this.from.column));
 	}
 
 	MiniPyError.prototype.toString = function() {

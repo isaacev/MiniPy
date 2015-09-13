@@ -149,35 +149,7 @@ var Interpreter = (function(Scope) {
 		function exec(node) {
 			switch (node.type) {
 				case 'Literal':
-					switch (node.subtype) {
-						case 'Boolean':
-							if (node.value === 'True') {
-								return true;
-							} else {
-								return false;
-							}
-						case 'Numeric':
-							var value = parseFloat(node.value);
-
-							if (isNaN(value)) {
-								throw ast.error({
-									type: 'SyntaxError',
-									message: 'Could not parse to a number: "' + node.value + '"',
-									from: {
-										line: node.line,
-										column: node.column,
-									},
-									to: {
-										line: node.line,
-										column: node.column + node.value.length,
-									},
-								});
-							} else {
-								return value;
-							}
-						case 'String':
-							return node.value;
-					}
+					return node.value;
 				case 'Identifier':
 					return scope.get(node);
 				case 'AssignmentExpression':
@@ -189,7 +161,7 @@ var Interpreter = (function(Scope) {
 				case 'UnaryExpression':
 					var right = exec(node.right);
 
-					switch (node.operator) {
+					switch (node.operator.getValue()) {
 						case '+':
 							return right;
 						case '-':
@@ -199,7 +171,7 @@ var Interpreter = (function(Scope) {
 						default:
 							throw ast.error({
 								type: 'SyntaxError',
-								message: 'Unknown operator: "' + node.operator + '"',
+								message: 'Unknown operator: "' + node.operator.getValue() + '"',
 								from: {
 									line: node.line,
 									column: node.column,
@@ -221,33 +193,55 @@ var Interpreter = (function(Scope) {
 					var rightType = typeof right;
 
 					function binaryOperationIncorrectTypes(message) {
-						throw ast.error({
-							type: 'RuntimeError',
+						return ast.error({
+							type: ErrorType.UNSUPPORTED_OPERATION,
 							message: message,
 							from: {
-								line: node.line,
-								column: node.column,
+								line: node.left.line,
+								column: node.left.column,
 							},
 							to: {
-								line: node.line,
-								column: node.column + node.operator.length,
+								line: node.right.line,
+								column: node.right.column + node.right.getLength(),
 							},
 						});
 					}
 
-					switch (node.operator) {
+					// `el`: expected left type
+					// `er`: expected right type
+					// `al`: actual left type
+					// `ar`: actual right type
+					function expect(operation, el, er, al, ar) {
+						if (al !== el || er !== ar) {
+							var message = 'Unsupported operation "' + operation + '" ' +
+								'for type(s) "' + al + '" and "' + ar + '"';
+							throw binaryOperationIncorrectTypes(message);
+						}
+					}
+
+					switch (node.operator.getValue()) {
 						case '+':
 							return left + right;
 						case '-':
+							expect('-', 'number', 'number', leftType, rightType);
 							return left - right;
 						case '*':
+							expect('*', 'number', 'number', leftType, rightType);
 							return left * right;
 						case '/':
+							expect('/', 'number', 'number', leftType, rightType);
 							return left / right;
 						case '%':
+							expect('%', 'number', 'number', leftType, rightType);
 							return left % right;
 						case '**':
+							expect('**', 'number', 'number', leftType, rightType);
 							return Math.pow(left, right);
+						case '//':
+							// not technically correct, I believe Python technically
+							// does integer division (and thus truncation not rounding)
+							expect('//', 'number', 'number', leftType, rightType);
+							return Math.floor(left / right);
 						case '>':
 							return left > right;
 						case '>=':
@@ -263,14 +257,14 @@ var Interpreter = (function(Scope) {
 						default:
 							throw ast.error({
 								type: 'SyntaxError',
-								message: 'Unknown operator: "' + node.operator + '"',
+								message: 'Unknown operator: "' + node.operator.getValue() + '"',
 								from: {
 									line: node.line,
 									column: node.column,
 								},
 								to: {
 									line: node.line,
-									column: node.column + node.operator.length,
+									column: node.column + node.operator.getLength(),
 								},
 							});
 					}

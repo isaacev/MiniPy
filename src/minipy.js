@@ -1,6 +1,18 @@
 // [MiniPy] /src/minipy.js
 
 var MiniPy = (function(main) {
+	var ErrorType = {
+		UNEXPECTED_EOF: 1,
+		UNEXPECTED_TOKEN: 2,
+		UNKNOWN_OPERATOR: 3,
+		EXPECTED_NEWLINE: 4,
+		EXPECTED_DIGIT: 5,
+		UNTERMINATED_STRING: 6,
+		UNEXPECTED_CHAR: 7,
+		MALFORMED_NUMBER: 8,
+		UNSUPPORTED_OPERATION: 9,
+	};
+
 	var mods = {
 		MiniPyError: MiniPyError || null,
 		Scanner: Scanner || null,
@@ -26,20 +38,31 @@ var MiniPy = (function(main) {
 
 	var defaultMaxLinesExecuted = 2000;
 
-	function validate(code, done) {
+	function addNewline(code) {
+		// TODO: this method should probably take a lexer
+		// instead of a simple string so that any modifications
+		// still retain original token line/column info
+		return code + '\n';
+	}
+
+	function validate(code, opts) {
+		code = addNewline(code);
+		opts = opts || {};
+
 		try {
 			var scanner = new mods.Scanner(code);
 			var lexer = new mods.Lexer(scanner);
 			var parser = new mods.Parser(lexer);
 			var ast = parser.parse();
 
-			done(null, true);
+			return true;
 		} catch (err) {
-			done(err, false);
+			throw err;
 		}
 	}
 
 	function createInspector(code, opts) {
+		code = addNewline(code);
 		opts = opts || {};
 
 		var scanner = new mods.Scanner(code);
@@ -61,6 +84,7 @@ var MiniPy = (function(main) {
 		inspect: createInspector,
 
 		run: function(code, opts) {
+			code = addNewline(code);
 			opts = opts || {};
 
 			var inspector = createInspector(code, opts);
@@ -84,19 +108,25 @@ var MiniPy = (function(main) {
 
 		debug: {
 			getAST: function(code) {
+				code = addNewline(code);
+
 				var scanner = new mods.Scanner(code);
 				var lexer = new mods.Lexer(scanner);
 				var parser = new mods.Parser(lexer);
 				var ast = parser.parse();
-				
+
 				return ast;
 			},
 
 			getScanner: function(code) {
+				code = addNewline(code);
+
 				return new mods.Scanner(code);
 			},
 
 			getLexer: function(code) {
+				code = addNewline(code);
+
 				var scanner = new mods.Scanner(code);
 				return new mods.Lexer(scanner);
 			},

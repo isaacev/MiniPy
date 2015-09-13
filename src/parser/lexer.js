@@ -2,6 +2,8 @@
 
 var Lexer = (function(Token) {
 	function Lexer(scanner) {
+		var self = this;
+
 		var prefixOperatorCharacters = '=<>+-*/&|%^~!';
 		var suffixOperatorCharacters = '=<>+-*/&|';
 		var punctuationCharacters = ',:()[]{}';
@@ -107,16 +109,16 @@ var Lexer = (function(Token) {
 							if (indentation.length > indentationStack[0]) {
 								// code has indented
 								indentationStack.unshift(indentation.length);
-								buffer.push(new Token(this, 'Indent', null, line, column));
+								buffer.push(new Token(self, 'Indent', null, line, column));
 							} else if (indentation.length < indentationStack[0]) {
 								// code has dedented
 								indentationStack.shift();
-								buffer.push(new Token(this, 'Dedent', null, line, column));
+								buffer.push(new Token(self, 'Dedent', null, line, column));
 							}
 						} else if (scanner.EOF() && indentationStack.length > 1) {
 							while (indentationStack.length > 1) {
 								indentationStack.shift();
-								buffer.push(new Token(this, 'Dedent', null, line, column));
+								buffer.push(new Token(self, 'Dedent', null, line, column));
 							}
 						}
 
@@ -170,7 +172,7 @@ var Lexer = (function(Token) {
 							type = 'Boolean';
 						}
 
-						return new Token(this, type, value, line, column, isEOL());
+						return new Token(self, type, value, line, column, isEOL());
 					} else if (isNumeric(p)) {
 						// handle numbers
 						var type = 'Numeric';
@@ -220,7 +222,7 @@ var Lexer = (function(Token) {
 							if (!isNumeric(p)) {
 								// next character is not a digit
 								throw scanner.error({
-									type: 'SyntaxError',
+									type: ErrorType.EXPECTED_DIGIT,
 									message: 'Incorrect exponent syntax, expected a digit',
 									from: {
 										line: scanner.line,
@@ -242,7 +244,7 @@ var Lexer = (function(Token) {
 
 						if (isAlpha(p)) {
 							throw scanner.error({
-								type: 'SyntaxError',
+								type: ErrorType.EXPECTED_DIGIT,
 								message: 'Expected a digit',
 								from: {
 									line: scanner.line,
@@ -255,7 +257,7 @@ var Lexer = (function(Token) {
 							});
 						}
 
-						return new Token(this, type, value, line, column, isEOL());
+						return new Token(self, type, value, line, column, isEOL());
 					} else if (p === '"' || p === '\'') {
 						// handle string literals
 						var type = 'String';
@@ -270,7 +272,7 @@ var Lexer = (function(Token) {
 							if (p === null) {
 								// unexpected end of line
 								throw scanner.error({
-									type: 'SyntaxError',
+									type: ErrorType.UNTERMINATED_STRING,
 									message: 'Unterminated string, expecting a matching end quote instead got end of program',
 									from: {
 										line: line,
@@ -289,7 +291,7 @@ var Lexer = (function(Token) {
 									scanner.next();
 
 									throw scanner.error({
-										type: 'SyntaxError',
+										type: ErrorType.UNTERMINATED_STRING,
 										message: 'Unterminated string, expecting a matching end quote',
 										from: {
 											line: line,
@@ -303,7 +305,7 @@ var Lexer = (function(Token) {
 								} else {
 									// catch control characters
 									throw scanner.error({
-										type: 'SyntaxError',
+										type: ErrorType.UNEXPECTED_CHAR,
 										message: 'Control character in string',
 										from: {
 											line: scanner.line,
@@ -370,7 +372,7 @@ var Lexer = (function(Token) {
 							}
 						}
 
-						return new Token(this, type, value, line, column, isEOL());
+						return new Token(self, type, value, line, column, isEOL());
 					} else if (contains(prefixOperatorCharacters, p) ||
 						contains(punctuationCharacters, p)) {
 						// handle operators
@@ -384,12 +386,12 @@ var Lexer = (function(Token) {
 							value += scanner.next();
 						}
 
-						return new Token(this, type, value, line, column, isEOL());
+						return new Token(self, type, value, line, column, isEOL());
 					}
 				}
 
 				throw scanner.error({
-					type: 'SyntaxError',
+					type: ErrorType.UNEXPECTED_CHAR,
 					message: 'Unexpected character',
 					from: {
 						line: scanner.line,
@@ -405,45 +407,43 @@ var Lexer = (function(Token) {
 
 		var history = [];
 
-		return {
-			peek: function(backset) {
-				if (typeof backset === 'number' && backset < 1) {
-					return history[history.length + backset];
-				} else if (typeof backset === 'number' && backset > 1) {
-					throw new Error('Cannot peek forward more than 1 token');
+		this.peek = function(backset) {
+			if (typeof backset === 'number' && backset < 1) {
+				return history[history.length + backset] || null;
+			} else if (typeof backset === 'number' && backset > 1) {
+				throw new Error('Cannot peek forward more than 1 token');
+			} else {
+				if (buffer.length > 0) {
+					return buffer[0];
 				} else {
-					if (buffer.length > 0) {
-						return buffer[0];
-					} else {
-						var next = readNext();
+					var next = readNext();
 
-						if (next !== null) {
-							buffer.push(next);
-							return next;
-						} else {
-							return null;
-						}
+					if (next !== null) {
+						buffer.push(next);
+						return next;
+					} else {
+						return null;
 					}
 				}
-			},
+			}
+		};
 
-			next: function() {
-				var next = readNext();
-				
-				if (next !== null) {
-					history.push(next);
-				}
+		this.next = function() {
+			var next = readNext();
 
-				return next;
-			},
+			if (next !== null) {
+				history.push(next);
+			}
 
-			EOF: function() {
-				return (scanner.EOF() && buffer.length === 0);
-			},
+			return next;
+		};
 
-			error: function(details) {
-				return scanner.error(details);
-			},
+		this.EOF = function() {
+			return (scanner.EOF() && buffer.length === 0);
+		};
+
+		this.error = function(details) {
+			return scanner.error(details);
 		};
 	}
 
