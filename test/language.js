@@ -2,13 +2,14 @@
 
 var expect = require('chai').expect;
 var MiniPy = require('../build/minipy');
+var MiniPyError =  MiniPy.debug.MiniPyError;
 
 var isValid = function(isValid) {
 	expect(isValid).to.be.true;
 };
 
 var isNotValid = function(isValid) {
-	expect(isValid).to.be.an.instanceof(MiniPy.debug.MiniPyError);
+	expect(isValid).to.be.an.instanceof(MiniPyError);
 };
 
 describe('Python subset', function() {

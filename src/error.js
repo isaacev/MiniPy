@@ -41,8 +41,6 @@ var MiniPyError = (function() {
 
 		this.from = details.from || undefined;
 		this.to = details.to || undefined;
-
-		console.log(printOffense(source, this.from.line, this.from.column, this.to.column - this.from.column));
 	}
 
 	MiniPyError.prototype.toString = function() {

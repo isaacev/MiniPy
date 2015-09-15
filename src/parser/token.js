@@ -44,10 +44,10 @@ var Token = (function() {
 	};
 
 	Token.prototype.getLength = function() {
-		if (this.raw !== undefined) {
+		if (this.raw != undefined) {
 			return this.raw.length;
 		} else {
-			if (this.value !== null) {
+			if (this.value != undefined) {
 				return this.value.length;
 			} else {
 				// for Indents and Dedents

@@ -102,7 +102,7 @@ var MiniPy = (function(main) {
 				} else if (linesExecuted >= maxLinesExecuted) {
 					throw new mods.MiniPyError(code, {
 						type: mods.ErrorType.TIMEOUT,
-						message: 'Script execution timed out, probably because of an excessively long loop',
+						message: 'Program execution timed out, check for infinite loops',
 					});
 				}
 			}
@@ -130,6 +130,7 @@ var MiniPy = (function(main) {
 			},
 
 			MiniPyError: mods.MiniPyError,
+			ErrorType: mods.ErrorType,
 		},
 	};
 }));

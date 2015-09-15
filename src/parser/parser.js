@@ -496,8 +496,6 @@ var Parser = (function() {
 				throw token.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
 					message: message,
-					from: from || undefined,
-					to: to || undefined,
 				});
 			}
 		}
@@ -555,10 +553,16 @@ var Parser = (function() {
 		var prefix = this.symbols.prefixParselets[this.getTokenSymbol(token)];
 
 		if (prefix === undefined) {
+			if (typeof token.type === 'string') {
+				var tokenType = token.type.toLowerCase();
+			} else {
+				var tokenType = 'symbol';
+			}
+
 			// no prefix syntax registered with `token`'s symbol
 			throw token.error({
 				type: ErrorType.UNKNOWN_OPERATOR,
-				message: 'Unknown symbol "' + token.getValue() + '"',
+				message: 'Unexpected ' + tokenType + ' "' + token.getValue() + '"',
 			});
 		}
 

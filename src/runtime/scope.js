@@ -43,8 +43,8 @@ var Scope = (function() {
 		}
 	};
 
-	Scope.prototype.set = function(identifier, value) {
-		var name = identifier.value;
+	Scope.prototype.set = function(node, value) {
+		var name = node.value || node.toString();
 
 		if (this.isLocal(name)) {
 			this.local[name] = value;

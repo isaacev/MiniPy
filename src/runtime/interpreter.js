@@ -160,17 +160,36 @@ var Interpreter = (function(Scope) {
 					break;
 				case 'UnaryExpression':
 					var right = exec(node.right);
+					var rightType = typeof right;
+
+					function unaryOperationIncorrectTypes(message) {
+						return node.operator.error({
+							type: ErrorType.UNSUPPORTED_OPERATION,
+							message: message,
+						});
+					}
+
+					function expectOnce(operation, expected, actual) {
+						if (expected !== actual) {
+							var message = 'Unsupported operation "' + operation + '" ' +
+								'on type "' + actual + '"';
+							throw unaryOperationIncorrectTypes(message);
+						}
+					}
 
 					switch (node.operator.getValue()) {
 						case '+':
+							expectOnce('+', 'number', rightType);
 							return right;
 						case '-':
+							expectOnce('-', 'number', rightType);
 							return -1 * right;
 						case '!':
 						case 'not':
+							expectOnce(node.operator.getValue(), 'boolean', rightType);
 							return (right === false);
 						default:
-							throw ast.error({
+							throw node.operator.error({
 								type: 'SyntaxError',
 								message: 'Unknown operator: "' + node.operator.getValue() + '"',
 								from: {
@@ -194,17 +213,9 @@ var Interpreter = (function(Scope) {
 					var rightType = typeof right;
 
 					function binaryOperationIncorrectTypes(message) {
-						return ast.error({
+						return node.operator.error({
 							type: ErrorType.UNSUPPORTED_OPERATION,
 							message: message,
-							from: {
-								line: node.left.line,
-								column: node.left.column,
-							},
-							to: {
-								line: node.right.line,
-								column: node.right.column + node.right.getLength(),
-							},
 						});
 					}
 
@@ -212,7 +223,7 @@ var Interpreter = (function(Scope) {
 					// `er`: expected right type
 					// `al`: actual left type
 					// `ar`: actual right type
-					function expect(operation, el, er, al, ar) {
+					function expectTwice(operation, el, er, al, ar) {
 						if (al !== el || er !== ar) {
 							var message = 'Unsupported operation "' + operation + '" ' +
 								'for type(s) "' + al + '" and "' + ar + '"';
@@ -224,24 +235,24 @@ var Interpreter = (function(Scope) {
 						case '+':
 							return left + right;
 						case '-':
-							expect('-', 'number', 'number', leftType, rightType);
+							expectTwice('-', 'number', 'number', leftType, rightType);
 							return left - right;
 						case '*':
-							expect('*', 'number', 'number', leftType, rightType);
+							expectTwice('*', 'number', 'number', leftType, rightType);
 							return left * right;
 						case '/':
-							expect('/', 'number', 'number', leftType, rightType);
+							expectTwice('/', 'number', 'number', leftType, rightType);
 							return left / right;
 						case '%':
-							expect('%', 'number', 'number', leftType, rightType);
+							expectTwice('%', 'number', 'number', leftType, rightType);
 							return left % right;
 						case '**':
-							expect('**', 'number', 'number', leftType, rightType);
+							expectTwice('**', 'number', 'number', leftType, rightType);
 							return Math.pow(left, right);
 						case '//':
 							// not technically correct, I believe Python technically
 							// does integer division (and thus truncation not rounding)
-							expect('//', 'number', 'number', leftType, rightType);
+							expectTwice('//', 'number', 'number', leftType, rightType);
 							return Math.floor(left / right);
 						case '>':
 							return left > right;
@@ -254,23 +265,16 @@ var Interpreter = (function(Scope) {
 						case '==':
 							return left === right;
 						case 'and':
-							return left === true === right;
+							expectTwice('and', 'boolean', 'boolean', leftType, rightType);
+							return (left === true) && (right === true);
 						case '!=':
 							return left !== right;
 						case 'or':
 							return left || right;
 						default:
-							throw ast.error({
+							throw node.operator.error({
 								type: 'SyntaxError',
 								message: 'Unknown operator: "' + node.operator.getValue() + '"',
-								from: {
-									line: node.line,
-									column: node.column,
-								},
-								to: {
-									line: node.line,
-									column: node.column + node.operator.getLength(),
-								},
 							});
 					}
 				case 'CallExpression':
@@ -280,7 +284,7 @@ var Interpreter = (function(Scope) {
 						event('print', exec(node.arguments[0]));
 					} else {
 						// get identifier's value from scope
-						var fn = scope.get(calleeIdentifier);
+						var fn = scope.get(node.callee);
 
 						if (typeof fn === 'function') {
 							// call global function
