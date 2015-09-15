@@ -503,18 +503,6 @@ var Parser = (function() {
 
 				if (prev !== null) {
 					message += ' after "' + prev.getValue() + '"';
-
-					if (next.getValue() === 'Indent' || next.getValue() === 'Dedent') {
-						var from = {
-							line: token.line,
-							column: token.column + 1,
-						};
-
-						var to = {
-							line: token.line,
-							column: token.column + 2,
-						};
-					}
 				}
 
 				throw token.error({
