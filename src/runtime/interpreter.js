@@ -323,29 +323,57 @@ var Interpreter = (function(Scope) {
 							return execBlock(node.ifBlock);
 						});
 					} else {
-						var foundElif = false;
+						// check ELIF or ELSE clauses
+						var cases = [];
 
-						// check for ELIF clauses
 						if (node.elifBlocks !== null) {
-							for (var i = 0, l = node.elifBlocks.length; i < l; i++) {
-								var elifCondition = exec(node.elifBlocks[i].condition);
-
-								if (elifCondition === true) {
-									found = i;
-									break;
-								}
-							}
+							cases = node.elifBlocks;
 						}
 
-						if (foundElif !== false) {
-							// matching ELIF block
+						if (node.elseBlock !== null) {
+							cases.push(node.elseBlock);
+						}
+
+						var nextCase = function(cases) {
+							if (cases.length > 0) {
+								var thisCase = cases[0];
+
+								if (thisCase.type === 'ElifStatement') {
+									var elifCondition = exec(thisCase.condition);
+
+									if (elifCondition === true) {
+										// condition matches, execute this "elif" block
+										pause(function() {
+											return execBlock(thisCase.block);
+										});
+									} else {
+										// condition did not match, try next block
+										pause(function () {
+											return nextCase(cases.slice(1));
+										});
+									}
+
+									return {
+										type: 'ElifStatement',
+										line: thisCase.line,
+									};
+								} else if (thisCase.type === 'ElseStatement') {
+									// execution of "else" block
+									pause(function () {
+										return execBlock(thisCase.block);
+									});
+
+									return {
+										type: 'ElseStatement',
+										line: thisCase.line,
+									};
+								}
+							}
+						};
+
+						if (cases.length > 0) {
 							pause(function() {
-								return execBlock(node.elifBlocks[foundElif].block);
-							});
-						} else if (node.default !== null) {
-							// ELSE block
-							pause(function() {
-								return execBlock(node.elseBlock);
+								return nextCase(cases);
 							});
 						}
 					}
