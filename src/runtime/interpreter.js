@@ -382,13 +382,20 @@ var Interpreter = (function(Scope) {
 				case 'WhileStatement':
 					var condition = exec(node.condition);
 					var loop = function() {
-						var newCondition = exec(node.condition);
+						pause(function() {
+							var newCondition = exec(node.condition);
 
-						if (newCondition === true) {
-							pause(function() {
-								return execBlock(node.block, loop);
-							});
-						}
+							if (newCondition === true) {
+								pause(function() {
+									return execBlock(node.block, loop);
+								});
+							}
+
+							return {
+								type: 'WhileStatement',
+								line: node.line,
+							};
+						});
 					};
 
 					if (condition === true) {
