@@ -98,6 +98,7 @@ var MiniPy = (function(main) {
 				linesExecuted++;
 
 				if (expression === null) {
+					opts.hook && opts.hook.exit && typeof opts.hook.exit === 'function' && opts.hook.exit.apply({}, []);
 					break;
 				} else if (linesExecuted >= maxLinesExecuted) {
 					throw new mods.MiniPyError(code, {
