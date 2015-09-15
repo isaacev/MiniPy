@@ -433,18 +433,7 @@ var Interpreter = (function(Scope) {
 		}
 
 		function getLine(node) {
-			switch (node.type) {
-				case 'AssignmentExpression':
-					return node.left.line;
-				case 'PrintStatement':
-					return node.arguments.line;
-				case 'IfStatement':
-					return node.test.line;
-				case 'WhileStatement':
-					return node.line;
-				default:
-					return node.line;
-			}
+			return node.line;
 		}
 
 		function registerHook(eventName, hook) {
