@@ -1,0 +1,30 @@
+// [MiniPy] /site/scss/_debugger.scss
+
+#debugger {
+	height: $panel-height;
+	margin-bottom: $footer-height + $panel-padding;
+	position: absolute;
+	top: $control-height + $panel-padding;
+	right: 24px;
+	left: 24px;
+
+	.bordered {
+		background-color: white;
+		border: 1px solid $detail-gray;
+		box-sizing: border-box;
+		-moz-box-sizing: border-box;
+		-webkit-box-sizing: border-box;
+	}
+
+	.panel-description {
+		position: absolute;
+		top: 12px;
+		right: 16px;
+		font-size: 13px;
+		color: $light-text-gray;
+		z-index: 100;
+	}
+
+	@import 'editor';
+	@import 'runtime';
+}

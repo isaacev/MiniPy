@@ -1,0 +1,72 @@
+// [MiniPy] /site/scss/_controls.scss
+
+#controls {
+	width: 100%;
+	height: $control-height;
+	background-color: rgb(49, 51, 55);
+	cursor: default;
+
+	.control-button {
+		height: 40px;
+		margin: 12px 16px 12px 16px;
+		padding: 0 32px;
+		background: none;
+		border-style: none;
+		font: 14px "Roboto", sans-serif;
+		color: rgba(255, 255, 255, 0.8);
+		background-size: 18px 18px;
+		background-position: 8px center;
+		background-repeat: no-repeat;
+		cursor: pointer;
+
+		&:hover {
+			color: white;
+		}
+
+		&:focus {
+			outline: none;
+		}
+
+		&.disabled {
+			color: $button-disabled-gray;
+			cursor: default;
+		}
+
+		&.disabled:hover {
+			color: $button-disabled-gray;
+			cursor: default;
+		}
+
+		&[data-command="run"] {
+			background-image: url("../static/icons/active_run.png");
+
+			&.disabled {
+				background-image: url("../static/icons/disabled_run.png");
+			}
+		}
+
+		&[data-command="validate"] {
+			background-image: url("../static/icons/active_validate.png");
+
+			&.disabled {
+				background-image: url("../static/icons/disabled_validate.png");
+			}
+		}
+
+		&[data-command="step"] {
+			background-image: url("../static/icons/active_step.png");
+
+			&.disabled {
+				background-image: url("../static/icons/disabled_step.png");
+			}
+		}
+
+		&[data-command="stop"] {
+			background-image: url("../static/icons/active_stop.png");
+
+			&.disabled {
+				background-image: url("../static/icons/disabled_stop.png");
+			}
+		}
+	}
+}

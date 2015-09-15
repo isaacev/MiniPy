@@ -1,0 +1,20 @@
+// [MiniPy] /site/scss/_media.scss
+
+@media (max-width: 768px) {
+	#debugger {
+		height: (2 * $panel-height) + $panel-padding;
+
+		#editor {
+			width: auto;
+			left: -8px;
+			right: -8px;
+		}
+
+		#runtime {
+			width: auto;
+			top: $panel-height + $panel-padding;
+			left: -8px;
+			right: -8px;
+		}
+	}
+}

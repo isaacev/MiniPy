@@ -1,0 +1,86 @@
+// [MiniPy] /site/scss/_runtime.scss
+
+#runtime {
+	width: 50%;
+	height: $panel-height;
+	position: absolute;
+	top: 0;
+	right: -($panel-padding / 2);
+
+	#wrapper {
+		position: absolute;
+		top: 0;
+		right: $panel-padding / 2;
+		bottom: 0;
+		left: $panel-padding / 2;
+	}
+
+	ul {
+		margin: 0;
+		padding: 44px 0 8px 0;
+		position: absolute;
+		top: 0;
+		right: 0;
+		bottom: 0;
+		left: 0;
+		list-style: none;
+		overflow-y: scroll;
+
+		li {
+			height: 24px;
+			margin: 0 8px;
+			padding: 0;
+			list-style: none;
+			font: 13px/24px "Source Code Pro", monospace;
+
+			&.mutating {
+				background-color: $detail-gray;
+				border-radius: 4px;
+			}
+
+			.value.number {
+				color: #33AA33;
+			}
+
+			.value.string {
+				color: #AA2222;
+
+				&::before {
+					content: "\"";
+				}
+
+				&::after {
+					content: "\"";
+				}
+			}
+
+			.value.boolean {
+				color: #007777;
+				text-transform: capitalize;
+			}
+		}
+	}
+
+	.shadow-top {
+		width: 100%;
+		height: 44px;
+		position: absolute;
+		top: 0;
+		left: 0;
+		background: -webkit-linear-gradient(bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 70%);
+		z-index: 50;
+	}
+
+	.shadow-bottom {
+		width: 100%;
+		height: 20px;
+		position: absolute;
+		bottom: 0;
+		left: 0;
+		background: -webkit-linear-gradient(top, rgba(255,255,255,0) 0%,rgba(255,255,255,1) 70%);
+		z-index: 50;
+	}
+
+	@import 'scope';
+	@import 'stdout';
+}
