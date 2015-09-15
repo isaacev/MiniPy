@@ -8,7 +8,7 @@ Basic usage:
 
 ```javascript
 
-var minipyScript = 'print(not False and x)';
+var script = 'print(not False and x)';
 
 MiniPy.run(script, {
   globals: {
