@@ -120,7 +120,7 @@ var Parser = (function() {
 					this.condition = condition;
 					this.ifBlock = ifBlock;
 					this.elifBlocks = elifBlocks;
-					this.elsBlock = elseBlock;
+					this.elseBlock = elseBlock;
 
 					this.line = ifKeywordToken.line;
 					this.column = ifKeywordToken.column;
@@ -130,7 +130,7 @@ var Parser = (function() {
 						var lastBlock = ifBlock;
 
 						if (elseBlock !== null) {
-							lastBlock = elseBlock;
+							lastBlock = elseBlock.block;
 						} else if (elifBlocks.length !== null && elifBlocks.length > 0) {
 							lastBlock = elifBlocks[elifBlocks.length - 1];
 						}
@@ -198,6 +198,21 @@ var Parser = (function() {
 				Infix: function(precedence) {
 					this.parse = function(parser, operatorToken, leftOperand) {
 						var rightOperand = parser.parseExpression(precedence);
+
+						if (operatorToken.EOL === true) {
+							throw operatorToken.error({
+								type: ErrorType.UNEXPECTED_CHAR,
+								message: 'Right operand must be on the same line',
+							});
+						} else if (operatorToken.value === '=') {
+							// assignment-specific rules
+							if (leftOperand.type !== 'Identifier') {
+								throw leftOperand.error({
+									type: ErrorType.UNEXPECTED_TOKEN,
+									message: 'Left operand must be an identifier',
+								});
+							}
+						}
 
 						return new self.nodes.expressions.Infix(operatorToken, leftOperand, rightOperand);
 					};
@@ -297,7 +312,16 @@ var Parser = (function() {
 						if (self.peek('Keyword', 'else') !== null) {
 							var elseKeywordToken = self.next('Keyword', 'else');
 							self.next('Punctuator', ':');
-							elseBlock = self.parseBlock();
+							elseBlock = {
+								type: 'ElseStatement',
+								block: self.parseBlock(),
+
+								line: elseKeywordToken.line,
+								column: elseKeywordToken.column,
+								EOL: true,
+							};
+
+							// TODO: bundle elseKeywordToken line/column data with IfStatement
 						}
 
 						return new self.nodes.expressions.If(ifKeywordToken, condition, ifBlock, elifStatements, elseBlock);
