@@ -18,7 +18,7 @@ var cm = CodeMirror(document.querySelector('#editor'), {
 	mode: 'python',
 	theme: 'neat',
 
-	value: 'True',
+	value: '# simple Fibonacci\n\nn1 = 1\nn2 = 1\n\nwhile n1 < 1000:\n\tprint(n1)\n\ttmp = n1\n\tn1 = n2\n\tn2 = n2 + tmp\n',
 
 	lineNumbers: true,
 	indentUnit: 4,
