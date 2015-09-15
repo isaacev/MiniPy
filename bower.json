@@ -6,7 +6,7 @@
     "Isaac Evavold <nomadicbit@gmail.com>"
   ],
   "description": "a subset of Python build in JavaScript with an interpreter for learning about programming",
-  "main": "site/index.html",
+  "main": "index.html",
   "license": "MIT",
   "dependencies": {
     "codemirror": "~5.6.0",
