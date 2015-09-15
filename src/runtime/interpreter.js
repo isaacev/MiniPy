@@ -45,7 +45,18 @@ var Interpreter = (function(Scope) {
 		];
 
 		// object with arrays of hook functions maped to valid event names
+		var waitingHooks = [];
 		var hooks = hooks || {};
+
+		function clearWaitingHooks(expression) {
+			if (waitingHooks.length > 0) {
+				waitingHooks.map(function(hook) {
+					hook.call({}, expression);
+				});
+
+				waitingHooks = [];
+			}
+		}
 
 		var loadOnce = once(function() {
 			event('load');
@@ -64,7 +75,10 @@ var Interpreter = (function(Scope) {
 						payload = [payload];
 					}
 
-					hook.apply({}, payload);
+					// hook.apply({}, payload);
+					waitingHooks.push(function(expression) {
+						hook.apply(expression || {}, payload);
+					});
 				});
 			}
 		}
@@ -431,9 +445,13 @@ var Interpreter = (function(Scope) {
 
 				if (typeof fn === 'function') {
 					var expression = fn.apply({}, []);
+
+					clearWaitingHooks(expression);
+
 					return expression;
 				} else {
 					exitOnce();
+					clearWaitingHooks(null);
 					return null;
 				}
 			},
