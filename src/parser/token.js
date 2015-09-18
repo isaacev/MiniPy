@@ -1,7 +1,7 @@
 // [MiniPy] /src/parser/Token.js
 
 var Token = (function() {
-	function Token(lexer, type, value, line, column, eol) {
+	function Token(lexer, type, value, line, column) {
 		this.lexer = lexer;
 		this.type = type;
 		
@@ -32,7 +32,6 @@ var Token = (function() {
 
 		this.line = line;
 		this.column = column;
-		this.EOL = (eol === true ? true : false);
 	}
 
 	Token.prototype.getValue = function() {

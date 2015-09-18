@@ -102,7 +102,7 @@ var MiniPy = (function(main) {
 					break;
 				} else if (linesExecuted >= maxLinesExecuted) {
 					throw new mods.MiniPyError(code, {
-						type: mods.ErrorType.TIMEOUT,
+						type: mods.ErrorType.EXECUTION_TIMEOUT,
 						message: 'Program execution timed out, check for infinite loops',
 					});
 				}

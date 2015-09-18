@@ -28,7 +28,7 @@ var Scope = (function() {
 				return this.parent.get(name);
 			} else {
 				throw this.errorGenerator({
-					type: 'ReferenceError',
+					type: ErrorType.UNDEFINED_VARIABLE,
 					message: 'No variable with identifier "' + name + '"',
 					from: {
 						line: node.line,

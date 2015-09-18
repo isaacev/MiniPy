@@ -35,7 +35,6 @@ var Parser = (function() {
 
 					this.line = token.line;
 					this.column = token.column;
-					this.EOL = token.EOL || false;
 
 					this.error = function(details) {
 						return token.error(details);
@@ -49,7 +48,6 @@ var Parser = (function() {
 
 					this.line = operator.line;
 					this.column = operator.column;
-					this.EOL = operand.EOL || false;
 
 					this.error = function(details) {
 						switch (details.type) {
@@ -70,7 +68,6 @@ var Parser = (function() {
 
 					this.line = operator.line;
 					this.column = operator.column;
-					this.EOL = operandRight.EOL || false;
 
 					this.error = function(details) {
 						switch (details.type) {
@@ -91,7 +88,6 @@ var Parser = (function() {
 
 					this.line = callee.line;
 					this.column = callee.column;
-					this.EOL = rightParenToken.EOL;
 
 					this.error = function(details) {
 						switch (details.type) {
@@ -124,7 +120,6 @@ var Parser = (function() {
 
 					this.line = ifKeywordToken.line;
 					this.column = ifKeywordToken.column;
-					this.EOL = true;
 
 					this.error = function(details) {
 						var lastBlock = ifBlock;
@@ -154,7 +149,6 @@ var Parser = (function() {
 
 					this.line = whileKeywordToken.line;
 					this.column = whileKeywordToken.column;
-					this.EOL = true;
 
 					this.error = function(details) {
 						var lastExpression = block[block.length - 1];
@@ -199,21 +193,6 @@ var Parser = (function() {
 					this.parse = function(parser, operatorToken, leftOperand) {
 						var rightOperand = parser.parseExpression(precedence);
 
-						if (operatorToken.EOL === true) {
-							throw operatorToken.error({
-								type: ErrorType.UNEXPECTED_CHAR,
-								message: 'Right operand must be on the same line',
-							});
-						} else if (operatorToken.value === '=') {
-							// assignment-specific rules
-							if (leftOperand.type !== 'Identifier') {
-								throw leftOperand.error({
-									type: ErrorType.UNEXPECTED_TOKEN,
-									message: 'Left operand must be an identifier',
-								});
-							}
-						}
-
 						return new self.nodes.expressions.Infix(operatorToken, leftOperand, rightOperand);
 					};
 
@@ -247,14 +226,6 @@ var Parser = (function() {
 
 						while (self.peek('Punctuator', ')') === null) {
 							var arg = parser.parseExpression();
-
-							if (arg.EOL === true) {
-								throw arg.error({
-									type: ErrorType.UNEXPECTED_CHAR,
-									message: 'Expected ")" after argument',
-								});
-							}
-
 							args.push(arg);
 
 							if (self.peek('Punctuator', ',') === null) {
@@ -279,7 +250,10 @@ var Parser = (function() {
 
 					this.parse = function(parser, ifKeywordToken) {
 						var condition = self.parseExpression();
+
 						self.next('Punctuator', ':');
+						self.next('Newline');
+
 						var ifBlock = self.parseBlock();
 
 						// collect the `elif` blocks (if they exist)
@@ -288,7 +262,10 @@ var Parser = (function() {
 						while (self.peek('Keyword', 'elif') !== null) {
 							var elifKeywordToken = self.next('Keyword', 'elif');
 							var elifCondition = self.parseExpression();
+
 							self.next('Punctuator', ':');
+							self.next('Newline');
+
 							var elifBlock = self.parseBlock();
 
 							elifStatements.push({
@@ -298,7 +275,6 @@ var Parser = (function() {
 
 								line: elifKeywordToken.line,
 								column: elifKeywordToken.column,
-								EOL: true,
 							});
 						}
 
@@ -311,14 +287,16 @@ var Parser = (function() {
 
 						if (self.peek('Keyword', 'else') !== null) {
 							var elseKeywordToken = self.next('Keyword', 'else');
+
 							self.next('Punctuator', ':');
+							self.next('Newline');
+
 							elseBlock = {
 								type: 'ElseStatement',
 								block: self.parseBlock(),
 
 								line: elseKeywordToken.line,
 								column: elseKeywordToken.column,
-								EOL: true,
 							};
 
 							// TODO: bundle elseKeywordToken line/column data with IfStatement
@@ -337,7 +315,10 @@ var Parser = (function() {
 
 					this.parse = function(parser, whileKeywordToken) {
 						var condition = self.parseExpression();
+
 						self.next('Punctuator', ':');
+						self.next('Newline');
+
 						var block = self.parseBlock();
 
 						return new self.nodes.expressions.While(whileKeywordToken, condition, block);
@@ -462,52 +443,17 @@ var Parser = (function() {
 			}
 
 			// token doesn't match type or value
-			if (next === null) {
-				var lastToken = this.lexer.peek(-1);
-
-				var expectation = '"' + (value || type) + '"';
-
-				if (expectation === '"Indent"') {
-					expectation = 'new line and indentation';
-				} else if (expectation === '"Dedent"') {
-					expectation = 'end of line';
-				}
-
-				throw lastToken.error({
+			if (next.type === 'EOF' || next === null) {
+				var curr = this.lexer.curr();
+				throw curr.error({
 					type: ErrorType.UNEXPECTED_EOF,
-					message: 'Unexpected end of file. Expected ' + expectation,
+					message: 'Unexpected end of file. Expected ' + (value || type).toUpperCase(),
 				});
 			} else {
-				var token = this.lexer.peek(-2) || next;
-
-				var unexpected = '"' + next.getValue() + '"';
-
-				if (unexpected === '"Indent"') {
-					unexpected = 'new line and indentation';
-				} else if (unexpected === '"Dedent"') {
-					unexpected = 'end of line';
-				} else {
-					token = next;
-				}
-
-				var expectation = '"' + (value || type) + '"';
-
-				if (expectation === '"Indent"') {
-					expectation = 'new line and indentation';
-				} else if (expectation === '"Dedent"') {
-					expectation = 'end of line';
-				}
-
-				var message = 'Unexpected ' + unexpected + '. Expected ' + expectation;
-				var prev = this.lexer.peek(-2);
-
-				if (prev !== null) {
-					message += ' after "' + prev.getValue() + '"';
-				}
-
-				throw token.error({
+				var curr = this.lexer.curr();
+				throw curr.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
-					message: message,
+					message: 'Unexpected ' + (curr.type).toUpperCase() + '. Expected ' + (value || type).toUpperCase(),
 				});
 			}
 		}
@@ -550,31 +496,22 @@ var Parser = (function() {
 	Parser.prototype.parseExpression = function(precedence) {
 		precedence = precedence || 0;
 
-		var token = this.next();
-
-		if (token === null) {
+		if (this.peek('EOF')) {
 			// expression was abruptly ended by EOF
-			var lastToken = this.lexer.peek(-1);
-
-			throw lastToken.error({
+			throw token.error({
 				type: ErrorType.UNEXPECTED_EOF,
-				message: 'Unexpected end of file',
+				message: 'Unexpected end of program',
 			});
 		}
 
+		var token = this.next();
 		var prefix = this.symbols.prefixParselets[this.getTokenSymbol(token)];
 
 		if (prefix === undefined) {
-			if (typeof token.type === 'string') {
-				var tokenType = token.type.toLowerCase();
-			} else {
-				var tokenType = 'symbol';
-			}
-
 			// no prefix syntax registered with `token`'s symbol
 			throw token.error({
-				type: ErrorType.UNKNOWN_OPERATOR,
-				message: 'Unexpected ' + tokenType + ' "' + token.getValue() + '"',
+				type: ErrorType.UNEXPECTED_TOKEN,
+				message: 'Unexpected ' + token.type + ' with value "' + token.getValue() + '"',
 			});
 		}
 
@@ -598,19 +535,23 @@ var Parser = (function() {
 
 		var body = [];
 
-		while (this.peek('Dedent') === null) {
+		while (true) {
 			var latest = this.parseExpression();
 			body.push(latest);
+			
+			this.next('Newline');
 
-			if (latest.EOL === false) {
-				throw latest.error({
-					type: ErrorType.EXPECTED_NEWLINE,
-					message: 'Expected newline after ' + latest.type,
+			if (this.peek('Dedent')) {
+				this.next('Dedent');
+				break;
+			} else {
+				var next = this.next();
+				throw next.error({
+					type: ErrorType.UNEXPECTED_TOKEN,
+					message: 'Expected end of indented indentation',
 				});
 			}
 		}
-
-		this.next('Dedent');
 
 		return body;
 	};
@@ -618,17 +559,47 @@ var Parser = (function() {
 	Parser.prototype.parseProgram = function() {
 		var body = [];
 
-		while (this.lexer.EOF() === false) {
+		// consume first newline if it exists
+		if (this.peek('Newline')) {
+			this.next('Newline');
+		}
+
+		while (true) {
 			var latest = this.parseExpression();
 			body.push(latest);
 
-			if (this.lexer.EOF() === true && latest.EOL === false) {
-				throw latest.error({
-					type: ErrorType.EXPECTED_NEWLINE,
-					message: 'Expected newline after expression',
-				});
+			if (this.lexer.curr().type === 'Dedent') {
+				continue;
+			} else if (this.peek('Newline')) {
+				// expression followed by a Newline token
+				this.next('Newline');
+
+				if (this.peek('EOF')) {
+					// Newline token followed by an EOF token
+					break;
+				}
+			} else if (this.peek('EOF')) {
+				// expression followed by an EOF token
+				break;
+			} else {
+				// expression followed by an illegal token
+				var next = this.peek();
+
+				if (next !== null) {
+					throw next.error({
+						type: ErrorType.UNEXPECTED_TOKEN,
+						message: 'Expected the end of the program',
+					});
+				} else {
+					throw latest.error({
+						type: ErrorType.UNEXPECTED_EOF,
+						message: 'Expression was followed by an unexpected end of the program',
+					});
+				}
 			}
 		}
+
+		this.next('EOF');
 
 		return new this.nodes.expressions.Program(body);
 	};
