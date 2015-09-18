@@ -178,7 +178,7 @@ var Interpreter = (function(Scope) {
 
 					function unaryOperationIncorrectTypes(message) {
 						return node.operator.error({
-							type: ErrorType.UNSUPPORTED_OPERATION,
+							type: ErrorType.TYPE_VIOLATION,
 							message: message,
 						});
 					}
@@ -228,7 +228,7 @@ var Interpreter = (function(Scope) {
 
 					function binaryOperationIncorrectTypes(message) {
 						return node.operator.error({
-							type: ErrorType.UNSUPPORTED_OPERATION,
+							type: ErrorType.TYPE_VIOLATION,
 							message: message,
 						});
 					}
@@ -307,7 +307,7 @@ var Interpreter = (function(Scope) {
 						} else {
 							// callee is not a function
 							node.callee.error({
-								type: ErrorType.UNSUPPORTED_OPERATION,
+								type: ErrorType.TYPE_VIOLATION,
 								message: '"' + calleeIdentifier + '" is not a function',
 							});
 						}
