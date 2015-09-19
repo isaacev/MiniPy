@@ -1,12 +1,14 @@
 // [MiniPy] /test/lexer.js
 
 var expect = require('chai').expect;
-var getLexer = require('../build/minipy').debug.getLexer;
+var Scanner = require('../src/parser/scanner').Scanner;
+var Lexer = require('../src/parser/lexer').Lexer;
 
 describe('lexer', function() {
 	describe('.peek()', function() {
 		it('should return EOF token then null if given empty program', function() {
-			var lexer = getLexer('');
+			var scanner = new Scanner('');
+			var lexer = new Lexer(scanner);
 
 			expect(lexer.peek()).to.have.property('type').to.equal('EOF');
 
@@ -16,7 +18,8 @@ describe('lexer', function() {
 		});
 
 		it('should return EOF token then null after exhausting inputs', function() {
-			var lexer = getLexer('abc\n123');
+			var scanner = new Scanner('abc\n123');
+			var lexer = new Lexer(scanner);
 
 			lexer.next(); // [ abc ]
 			lexer.next(); // [ \n  ]
@@ -32,14 +35,16 @@ describe('lexer', function() {
 
 	describe('.next()', function() {
 		it('should return EOF token then null if given empty program', function() {
-			var lexer = getLexer('');
+			var scanner = new Scanner('');
+			var lexer = new Lexer(scanner);
 
 			expect(lexer.next()).to.have.property('type').to.equal('EOF');
 			expect(lexer.next()).to.equal(null);
 		});
 
 		it('should return EOF token then null after exhausting input', function() {
-			var lexer = getLexer('abc\n123 def');
+			var scanner = new Scanner('abc\n123 def');
+			var lexer = new Lexer(scanner);
 
 			lexer.next(); // [ abc ]
 			lexer.next(); // [ \n  ]

@@ -1,6 +1,6 @@
-// [MiniPy] /src/error.js
+// [MiniPy] /src/error/error.js
 
-var MiniPyError = (function() {
+exports.MiniPyError = (function() {
 	var spacesPerTabs = 4;
 
 	function mul(c, n) {
@@ -36,7 +36,7 @@ var MiniPyError = (function() {
 	}
 
 	function MiniPyError(source, details) {
-		this.type = details.type || 'Unknown Error';
+		this.type = details.type || 0;
 		this.message = details.message || '';
 
 		this.from = details.from || undefined;
@@ -52,7 +52,7 @@ var MiniPyError = (function() {
 			}
 
 			if (typeof this.range[0].column === 'number') {
-				 pos += ', column ' + (this.range[0].column + 1) + ')';
+				pos += ', column ' + (this.range[0].column + 1) + ')';
 			} else {
 				pos += ')';
 			}

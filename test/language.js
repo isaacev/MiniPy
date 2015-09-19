@@ -2,14 +2,13 @@
 
 var expect = require('chai').expect;
 var MiniPy = require('../build/minipy');
-var MiniPyError =  MiniPy.debug.MiniPyError;
 
 var isValid = function(isValid) {
 	expect(isValid).to.be.true;
 };
 
 var isNotValid = function(isValid) {
-	expect(isValid).to.be.an.instanceof(MiniPyError);
+	expect(isValid).to.be.an.instanceof(MiniPy.Error);
 };
 
 describe('Python subset', function() {
@@ -107,8 +106,8 @@ describe('Python subset', function() {
 			});
 
 			it('should not permit uncapitalized boolean literals', function() {
-				expect(MiniPy.run.bind(MiniPy, 'true')).to.throw(MiniPyError);
-				expect(MiniPy.run.bind(MiniPy, 'false')).to.throw(MiniPyError);
+				expect(MiniPy.run.bind(MiniPy, 'true')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, 'false')).to.throw(MiniPy.Error);
 			});
 		});
 	});
@@ -139,17 +138,17 @@ describe('Python subset', function() {
 				});
 
 				it('should not work on numbers', function() {
-					expect(test.bind(test, 'test(False,  not -1)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,    not 0)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(False, not 0.5)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(False, not 123)')).to.throw(MiniPyError);
+					expect(test.bind(test, 'test(False,  not -1)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,    not 0)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(False, not 0.5)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(False, not 123)')).to.throw(MiniPy.Error);
 				});
 
 				it('should not work on strings', function() {
-					expect(test.bind(test, 'test(False,   not "abc")')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,       not "")')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(False, not "False")')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(False,     not "0")')).to.throw(MiniPyError);
+					expect(test.bind(test, 'test(False,   not "abc")')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,       not "")')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(False, not "False")')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(False,     not "0")')).to.throw(MiniPy.Error);
 				});
 			});
 
@@ -169,17 +168,17 @@ describe('Python subset', function() {
 				});
 
 				it('should not work on numbers', function () {
-					expect(test.bind(test, 'test(True, 123 and 123)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,     0 and 0)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,  True and 1)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,    -1 and 1)')).to.throw(MiniPyError);
+					expect(test.bind(test, 'test(True, 123 and 123)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,     0 and 0)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,  True and 1)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,    -1 and 1)')).to.throw(MiniPy.Error);
 				});
 
 				it('should not work on strings', function () {
-					expect(test.bind(test, 'test(True,         "" and "")')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True, "True" and "True")')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,   "True" and True)')).to.throw(MiniPyError);
-					expect(test.bind(test, 'test(True,   "abc" and "abc")')).to.throw(MiniPyError);
+					expect(test.bind(test, 'test(True,         "" and "")')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True, "True" and "True")')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,   "True" and True)')).to.throw(MiniPy.Error);
+					expect(test.bind(test, 'test(True,   "abc" and "abc")')).to.throw(MiniPy.Error);
 				});
 			});
 		});

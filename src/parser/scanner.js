@@ -1,6 +1,8 @@
 // [MiniPy] /src/parser/Scanner.js
 
-var Scanner = (function(MiniPyError) {
+exports.Scanner = (function() {
+	var MiniPyError = require('../error/error').MiniPyError;
+
 	function Scanner(input) {
 		this.line = 0;
 		this.column = 0;
@@ -46,4 +48,4 @@ var Scanner = (function(MiniPyError) {
 	};
 
 	return Scanner;
-}(MiniPyError));
+}());

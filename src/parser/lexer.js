@@ -1,6 +1,9 @@
 // [MiniPy] /src/parser/Lexer.js
 
-var Lexer = (function(Token) {
+exports.Lexer = (function() {
+	var ErrorType = require('../error/errorType').ErrorType;
+	var Token = require('./token').Token;
+
 	function Lexer(scanner) {
 		var self = this;
 
@@ -607,4 +610,4 @@ var Lexer = (function(Token) {
 	}
 
 	return Lexer;
-}(Token));
+}());

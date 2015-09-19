@@ -1,11 +1,14 @@
 // [MiniPy] /src/runtime/Interpreter.js
 
-var Interpreter = (function(Scope) {
+exports.Interpreter = (function() {
 	// TODO:
 	// + For loop
 	// + Range function
 	// + Change print statement to function (Python 3.0)
 	// + Operation type checking
+
+	var ErrorType = require('../error/errorType').ErrorType;
+	var Scope = require('./scope').Scope;
 
 	// for preventing certain events from being called again and again
 	function once(fn, context) {
@@ -348,7 +351,7 @@ var Interpreter = (function(Scope) {
 										});
 									} else {
 										// condition did not match, try next block
-										pause(function () {
+										pause(function() {
 											return nextCase(cases.slice(1));
 										});
 									}
@@ -359,7 +362,7 @@ var Interpreter = (function(Scope) {
 									};
 								} else if (thisCase.type === 'ElseStatement') {
 									// execution of "else" block
-									pause(function () {
+									pause(function() {
 										return execBlock(thisCase.block);
 									});
 
@@ -485,4 +488,4 @@ var Interpreter = (function(Scope) {
 	}
 
 	return Interpreter;
-}(Scope));
+}());

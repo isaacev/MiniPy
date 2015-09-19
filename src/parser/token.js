@@ -1,10 +1,10 @@
 // [MiniPy] /src/parser/Token.js
 
-var Token = (function() {
+exports.Token = (function() {
 	function Token(lexer, type, value, line, column) {
 		this.lexer = lexer;
 		this.type = type;
-		
+
 		switch (type) {
 			case 'Numeric':
 				this.raw = value;

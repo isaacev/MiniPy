@@ -1,12 +1,12 @@
 // [MiniPy] /test/scanner.js
 
 var expect = require('chai').expect;
-var getScanner = require('../build/minipy').debug.getScanner;
+var Scanner = require('../src/parser/scanner').Scanner;
 
 describe('scanner', function() {
 	describe('.peek()', function() {
 		it('should return next character but not advance scanner', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			expect(scanner.peek()).to.equal('a');
 
@@ -24,7 +24,7 @@ describe('scanner', function() {
 		});
 
 		it('should return null if input is exhausted', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			scanner.next();
 			scanner.next();
@@ -37,7 +37,7 @@ describe('scanner', function() {
 
 	describe('.next()', function() {
 		it('should return next character', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			expect(scanner.next()).to.equal('a');
 			expect(scanner.next()).to.equal('b');
@@ -45,7 +45,7 @@ describe('scanner', function() {
 		});
 
 		it('should repeatedly return null after exhausting input', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			expect(scanner.next()).to.equal('a');
 			expect(scanner.next()).to.equal('b');
@@ -58,7 +58,7 @@ describe('scanner', function() {
 
 	describe('.EOF()', function() {
 		it('should return false until input is exhausted', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			expect(scanner.EOF()).to.equal(false);
 			expect(scanner.EOF()).to.equal(false);
@@ -71,7 +71,7 @@ describe('scanner', function() {
 		});
 
 		it('should return true after input is exhausted', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			scanner.next();
 			scanner.next();
@@ -88,13 +88,13 @@ describe('scanner', function() {
 
 	describe('.line count', function() {
 		it('should start at 0', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			expect(scanner.line).to.equal(0);
 		});
 
 		it('should increment after passing \\n character', function() {
-			var scanner = getScanner('abc\ndef');
+			var scanner = new Scanner('abc\ndef');
 
 			scanner.next(); // a
 			scanner.next(); // b
@@ -117,13 +117,13 @@ describe('scanner', function() {
 
 	describe('.column count', function() {
 		it('should start at 0', function() {
-			var scanner = getScanner('abc');
+			var scanner = new Scanner('abc');
 
 			expect(scanner.column).to.equal(0);
 		});
 
 		it('should increment after passing non-\\n characters', function() {
-			var scanner = getScanner('abcdef');
+			var scanner = new Scanner('abcdef');
 
 			expect(scanner.column).to.equal(0);
 
@@ -141,7 +141,7 @@ describe('scanner', function() {
 		});
 
 		it('should reset after passing \\n characters', function() {
-			var scanner = getScanner('abc\ndef');
+			var scanner = new Scanner('abc\ndef');
 
 			scanner.next(); // a
 			scanner.next(); // b

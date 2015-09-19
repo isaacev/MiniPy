@@ -12,15 +12,15 @@
     "url": "https://github.com/isaacev/MiniPy.git"
   },
   "devDependencies": {
-    "async": "^1.4.2",
     "chai": "^3.2.0",
-    "escodegen": "^1.7.0",
-    "esprima": "^2.6.0",
+    "gulp": "^3.9.0",
+    "gulp-concat-util": "^0.5.2",
+    "gulp-esformatter": "^4.0.0",
     "uglify-js": "^2.4.24"
   },
   "scripts": {
     "test": "mocha",
-    "postinstall": "node build.js"
+    "postinstall": "gulp"
   },
   "author": "Isaac Evavold <nomadicbit@gmail.com>",
   "license": "MIT"

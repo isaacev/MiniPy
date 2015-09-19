@@ -1,6 +1,8 @@
 // [MiniPy] /src/parser/Parser.js
 
-var Parser = (function() {
+exports.Parser = (function() {
+	var ErrorType = require('../error/errorType').ErrorType;
+
 	function Parser(lexer) {
 		var self = this;
 		this.lexer = lexer;
@@ -538,7 +540,7 @@ var Parser = (function() {
 		while (true) {
 			var latest = this.parseExpression();
 			body.push(latest);
-			
+
 			this.next('Newline');
 
 			if (this.peek('Dedent')) {
@@ -569,7 +571,11 @@ var Parser = (function() {
 			body.push(latest);
 
 			if (this.lexer.curr().type === 'Dedent') {
-				continue;
+				if (this.peek('EOF')) {
+					break;
+				} else {
+					continue;
+				}
 			} else if (this.peek('Newline')) {
 				// expression followed by a Newline token
 				this.next('Newline');
@@ -583,7 +589,7 @@ var Parser = (function() {
 				break;
 			} else {
 				// expression followed by an illegal token
-				var next = this.peek();
+				var next = this.next();
 
 				if (next !== null) {
 					throw next.error({

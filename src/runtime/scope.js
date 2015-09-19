@@ -1,6 +1,8 @@
 // [MiniPy] /src/runtime/Scope.js
 
-var Scope = (function() {
+exports.Scope = (function() {
+	var ErrorType = require('../error/errorType').ErrorType;
+
 	function Scope(parent) {
 		this.parent = parent || null;
 		this.local = {};
