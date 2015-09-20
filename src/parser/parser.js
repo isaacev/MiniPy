@@ -546,11 +546,11 @@ exports.Parser = (function() {
 			if (this.peek('Dedent')) {
 				this.next('Dedent');
 				break;
-			} else {
+			} else if (this.peek('Indent') || this.peek('EOF')) {
 				var next = this.next();
 				throw next.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
-					message: 'Expected end of indented indentation',
+					message: 'Expected end of indentation',
 				});
 			}
 		}
