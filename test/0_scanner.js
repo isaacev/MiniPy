@@ -4,7 +4,7 @@ var expect = require('chai').expect;
 var Scanner = require('../src/parser/scanner').Scanner;
 
 describe('scanner', function() {
-	describe('.peek()', function() {
+	describe('#peek()', function() {
 		it('should return next character but not advance scanner', function() {
 			var scanner = new Scanner('abc');
 
@@ -35,7 +35,7 @@ describe('scanner', function() {
 		});
 	});
 
-	describe('.next()', function() {
+	describe('#next()', function() {
 		it('should return next character', function() {
 			var scanner = new Scanner('abc');
 
@@ -56,7 +56,7 @@ describe('scanner', function() {
 		});
 	});
 
-	describe('.EOF()', function() {
+	describe('#EOF()', function() {
 		it('should return false until input is exhausted', function() {
 			var scanner = new Scanner('abc');
 
@@ -86,7 +86,7 @@ describe('scanner', function() {
 		});
 	});
 
-	describe('.line count', function() {
+	describe('#line', function() {
 		it('should start at 0', function() {
 			var scanner = new Scanner('abc');
 
@@ -115,7 +115,7 @@ describe('scanner', function() {
 		});
 	});
 
-	describe('.column count', function() {
+	describe('#column', function() {
 		it('should start at 0', function() {
 			var scanner = new Scanner('abc');
 

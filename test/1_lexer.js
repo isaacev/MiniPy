@@ -5,7 +5,7 @@ var Scanner = require('../src/parser/scanner').Scanner;
 var Lexer = require('../src/parser/lexer').Lexer;
 
 describe('lexer', function() {
-	describe('.curr()', function () {
+	describe('#curr()', function () {
 		it('should return the current token', function() {
 			var scanner = new Scanner('123 :');
 			var lexer = new Lexer(scanner);
@@ -39,7 +39,7 @@ describe('lexer', function() {
 		});
 	});
 
-	describe('.peek()', function() {
+	describe('#peek()', function() {
 		it('should return EOF token then null if given empty program', function() {
 			var scanner = new Scanner('');
 			var lexer = new Lexer(scanner);
@@ -67,7 +67,7 @@ describe('lexer', function() {
 		});
 	});
 
-	describe('.next()', function() {
+	describe('#next()', function() {
 		it('should return EOF token then null if given empty program', function() {
 			var scanner = new Scanner('');
 			var lexer = new Lexer(scanner);
