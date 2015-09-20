@@ -1,4 +1,4 @@
-// [MiniPy] /test/scanner.js
+// [MiniPy] /test/0_scanner.js
 
 var expect = require('chai').expect;
 var Scanner = require('../src/parser/scanner').Scanner;

@@ -1,4 +1,4 @@
-// [MiniPy] /test/interpreter.js
+// [MiniPy] /test/2_interpreter.js
 
 var expect = require('chai').expect;
 var MiniPy = require('../build/minipy');
