@@ -272,12 +272,16 @@ exports.Interpreter = (function() {
 							expectTwice('//', 'number', 'number', leftType, rightType);
 							return Math.floor(left / right);
 						case '>':
+							expectTwice('>', 'number', 'number', leftType, rightType);
 							return left > right;
 						case '>=':
+							expectTwice('>=', 'number', 'number', leftType, rightType);
 							return left >= right;
 						case '<':
+							expectTwice('<=', 'number', 'number', leftType, rightType);
 							return left < right;
 						case '<=':
+							expectTwice('<=', 'number', 'number', leftType, rightType);
 							return left <= right;
 						case '==':
 							return left === right;
@@ -287,6 +291,7 @@ exports.Interpreter = (function() {
 						case '!=':
 							return left !== right;
 						case 'or':
+							expectTwice('or', 'boolean', 'boolean', leftType, rightType);
 							return left || right;
 						default:
 							throw node.operator.error({
