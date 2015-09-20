@@ -379,6 +379,7 @@ exports.Parser = (function() {
 		infix('-', 50);
 		infix('*', 60);
 		infix('/', 60);
+		infix('%', 60);
 
 		infix('**', 80);
 
