@@ -380,40 +380,6 @@ exports.Lexer = (function() {
 							}
 						}
 
-						if (p === 'e' || p === 'E') {
-							// handle exponent
-							value += scanner.next();
-							p = scanner.peek();
-
-							if (p === '-' || p === '+') {
-								// exponent sign exists
-								value += scanner.next();
-								p = scanner.peek();
-							}
-
-							if (!isNumeric(p)) {
-								// next character is not a digit
-								throw scanner.error({
-									type: ErrorType.UNEXPECTED_CHARACTER,
-									message: 'Incorrect exponent syntax, expected a digit',
-									from: {
-										line: scanner.line,
-										column: scanner.column,
-									},
-									to: {
-										line: scanner.line,
-										column: scanner.column + 1,
-									},
-								});
-							}
-
-							do {
-								// gather only exponent digits
-								value += scanner.next();
-								p = scanner.peek();
-							} while (isNumeric(p))
-						}
-
 						if (isAlpha(p)) {
 							throw scanner.error({
 								type: ErrorType.UNEXPECTED_CHARACTER,
