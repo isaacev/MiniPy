@@ -73,8 +73,187 @@ describe('Comparison', function() {
 			});
 		});
 
-		// describe OR
+		describe('OR', function() {
+			it('should return false only if both operand are false', function() {
+				test('test(True,  True  or True)');
+				test('test(True,  True  or False)');
+				test('test(True,  False or True)');
+				test('test(False, False or False)');
+			});
+
+			it('should be capable of being used in series', function() {
+				test('test(True,  True  or True  or True)');
+				test('test(True,  True  or True  or False)');
+				test('test(True,  True  or False or False)');
+				test('test(False, False or False or False)');
+			});
+
+			it('should not work on numbers', function() {
+				expect(test.bind(test, 'test(True, 123 or 123)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True,     0 or 0)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True,  True or 1)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True,    -1 or 1)')).to.throw(MiniPy.Error);
+			});
+
+			it('should not work on strings', function() {
+				expect(test.bind(test, 'test(True,         "" or "")')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, "True" or "True")')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True,   "True" or True)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True,   "abc" or "abc")')).to.throw(MiniPy.Error);
+			});
+		});
 	});
 
-	// describe < <= > >= == !=
+	describe('Values', function() {
+		describe('<', function() {
+			it('should return true when left < right', function() {
+				test('test(True, 10 < 100)');
+				test('test(True, -100 < 10)');
+			});
+
+			it('should return false when left > right', function() {
+				test('test(False, 100 < 10)');
+				test('test(False, 10 < -100)');
+			});
+
+			it('should return false when left == right', function() {
+				test('test(False, 100 < 100)');
+				test('test(False, 0 < 0)');
+			});
+
+			it('should only accept numbers as operands', function () {
+				expect(test.bind(test, 'test(True, "a" < "z")')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, False < True)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, 100 < "a")')).to.throw(MiniPy.Error);
+			});
+		});
+
+		describe('<=', function() {
+			it('should return true when left < right', function() {
+				test('test(True, 10 <= 100)');
+				test('test(True, -100 <= 10)');
+			});
+
+			it('should return false when left > right', function() {
+				test('test(False, 100 <= 10)');
+				test('test(False, 10 <= -100)');
+			});
+
+			it('should return true when left == right', function() {
+				test('test(True, 100 <= 100)');
+				test('test(True, 0 <= 0)');
+			});
+
+			it('should only accept numbers as operands', function () {
+				expect(test.bind(test, 'test(True, "a" <= "a")')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, False <= True)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, 100 <= "a")')).to.throw(MiniPy.Error);
+			});
+		});
+
+		describe('>', function() {
+			it('should return true when left > right', function() {
+				test('test(True, 100 > 10)');
+				test('test(True, 10 > -100)');
+			});
+
+			it('should return false when left < right', function() {
+				test('test(False, 10 > 100)');
+				test('test(False, -100 > 10)');
+			});
+
+			it('should return false when left == right', function() {
+				test('test(False, 100 > 100)');
+				test('test(False, 0 > 0)');
+			});
+
+			it('should only accept numbers as operands', function () {
+				expect(test.bind(test, 'test(True, "z" > "a")')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, True > False)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, "a" > 100)')).to.throw(MiniPy.Error);
+			});
+		});
+
+
+		describe('>=', function() {
+			it('should return true when left > right', function() {
+				test('test(True, 100 >= 10)');
+				test('test(True, 10 >= -100)');
+			});
+
+			it('should return false when left < right', function() {
+				test('test(False, 10 >= 100)');
+				test('test(False, -100 >= 10)');
+			});
+
+			it('should return true when left == right', function() {
+				test('test(True, 100 <= 100)');
+				test('test(True, 0 <= 0)');
+			});
+
+			it('should only accept numbers as operands', function () {
+				expect(test.bind(test, 'test(True, "a" >= "a")')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, True >= False)')).to.throw(MiniPy.Error);
+				expect(test.bind(test, 'test(True, "a" >= 100)')).to.throw(MiniPy.Error);
+			});
+		});
+
+		describe('==', function() {
+			it('should return false when left > right', function() {
+				test('test(False, 100 == 10)');
+				test('test(False, 10 == -100)');
+			});
+
+			it('should return false when left < right', function() {
+				test('test(False, 10 == 100)');
+				test('test(False, -100 == 10)');
+			});
+
+			it('should return true when left == right', function() {
+				test('test(True, -100 == -100)');
+				test('test(True, 0 == 0)');
+			});
+
+			it('should accept booleans as operands', function () {
+				test('test(True,  True == True)');
+				test('test(False, True == False)');
+				test('test(True,  False == False)');
+			});
+
+			it('should accept strings as operands', function () {
+				test('test(True,  "a" == "a")');
+				test('test(False, "a" == "z")');
+				test('test(True,  "" == "")');
+			});
+		});
+
+		describe('!=', function() {
+			it('should return true when left > right', function() {
+				test('test(True, 100 != 10)');
+				test('test(True, 10 != -100)');
+			});
+
+			it('should return true when left < right', function() {
+				test('test(True, 10 != 100)');
+				test('test(True, -100 != 10)');
+			});
+
+			it('should return false when left == right', function() {
+				test('test(False, -100 != -100)');
+				test('test(False, 0 != 0)');
+			});
+
+			it('should accept booleans as operands', function () {
+				test('test(False,  True != True)');
+				test('test(True, True != False)');
+				test('test(False,  False != False)');
+			});
+
+			it('should accept strings as operands', function () {
+				test('test(False,  "a" != "a")');
+				test('test(True, "a" != "z")');
+				test('test(False,  "" != "")');
+			});
+		});
+	});
 });
