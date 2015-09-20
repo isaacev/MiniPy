@@ -5,6 +5,40 @@ var Scanner = require('../src/parser/scanner').Scanner;
 var Lexer = require('../src/parser/lexer').Lexer;
 
 describe('lexer', function() {
+	describe('.curr()', function () {
+		it('should return the current token', function() {
+			var scanner = new Scanner('123 :');
+			var lexer = new Lexer(scanner);
+
+			lexer.next(); // [ 123 ]
+
+			expect(lexer.curr()).to.have.property('type').to.equal('Numeric');
+			expect(lexer.curr()).to.have.property('type').to.equal('Numeric');
+
+			lexer.next(); // [ : ]
+
+			expect(lexer.curr()).to.have.property('type').to.equal('Punctuator');
+			expect(lexer.curr()).to.have.property('type').to.equal('Punctuator');
+		});
+
+		it('should return EOF token then null after input is exhausted', function() {
+			var scanner = new Scanner('123 456');
+			var lexer = new Lexer(scanner);
+
+			lexer.next(); // [ 123 ]
+			lexer.next(); // [ 456 ]
+			lexer.next(); // [ EOF ]
+
+			expect(lexer.curr()).to.have.property('type').to.equal('EOF');
+			expect(lexer.curr()).to.have.property('type').to.equal('EOF');
+
+			lexer.next(); // [ null ]
+
+			expect(lexer.curr()).to.equal(null);
+			expect(lexer.curr()).to.equal(null);
+		});
+	});
+
 	describe('.peek()', function() {
 		it('should return EOF token then null if given empty program', function() {
 			var scanner = new Scanner('');
