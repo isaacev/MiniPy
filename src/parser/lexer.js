@@ -148,58 +148,71 @@ exports.Lexer = (function() {
 
 						if (isNewline(p)) {
 							// emit Newline token
+							currLineIndent = 0;
 							pushToken(new Token(self, 'Newline', scanner.next(), scanner.line, null));
-						} else if (isTab(p)) {
-							// handle indentation
+						} else if (isWhitespace(p)) {
+							// collect all indentation first
+							var pureTabIndentation = true;
 
-							// gather consecutive tabs
-							while (isTab(p = scanner.peek())) {
+							while (isWhitespace(p = scanner.peek()) && !isNewline(p)) {
+								if (!isTab(p)) {
+									pureTabIndentation = false;
+								}
+
 								scanner.next();
 								currLineIndent += 1;
 							}
 
-							// handle characters AFTER TAB INDENTATION
-							if (isNewline(p)) {
-								// next character is newline or the start of a comment
-								// thus any indentation collected is meaningless
-								// so consume indentation an go on
-								scanner.next();
-
-								// reset indentation counter since the newline makes
-								// any collected indentation meaningless
-								currLineIndent = 0;
+							if (isNewline(p) || isNull(p)) {
+								// an upcoming newline or EOF means that this line was only
+								// filled with whitespace so return the next token
+								// and ignore this line
+								break;
 							} else if (isCommentStart(p)) {
-								// next character is a comment so consume the comment
-								// and go to the next character. also reset indentation
-								// count because this line is syntactically insignificant
+								// consume comments that begin after indentation
 								consumeComment(scanner);
-
-								p = scanner.peek();
-								currLineIndent = 0;
-							} else if (isWhitespace(p)) {
-								// next character is not a newline or a tab, if the
-								// line is non-empty, throw an error
-
-								// consume non-newline whitespace characters
-								while (isWhitespace(p = scanner.peek()) && !isNewline(p)) {
-									scanner.next();
-								}
-
-								if (isNewline(p)) {
-									// an upcoming newline or comment means that this line was only
-									// filled with whitespace so return the next token
-									// and ignore this line
-									currLineIndent = 0;
-									break;
-								} else if (isCommentStart(p)) {
-									// consume upcoming comment and add newline to buffer
-									consumeComment(scanner);
-
-									currLineIndent = 0;
-									break;
+							} else {
+								// handle non-empty line
+								if (pureTabIndentation === true) {
+									if (state.hasPassedFirstLine === false) {
+										// first semantically significant line is
+										// indented, throw an error
+										throw scanner.error({
+											type: ErrorType.BAD_INDENTATION,
+											message: 'First line cannot be indented',
+											from: {
+												line: scanner.line,
+											},
+										});
+									} else {
+										if (currLineIndent > state.indent) {
+											if (currLineIndent === state.indent + 1) {
+												// current line increases level of indentation by 1
+												state.indent += 1;
+												pushToken(new Token(self, 'Indent', null, scanner.line, null));
+											} else {
+												// current line increases by more than 1 level of
+												// indentation, throw error
+												throw scanner.error({
+													type: ErrorType.BAD_INDENTATION,
+													message: 'Too much indentation',
+													from: {
+														line: scanner.line,
+													},
+												});
+											}
+										} else if (currLineIndent < state.indent) {
+											// current line has less indentation than previous lines
+											// emit dedent tokens until fully resolved
+											while (state.indent > currLineIndent) {
+												state.indent -= 1;
+												pushToken(new Token(self, 'Dedent', null, scanner.line, null));
+											}
+										}
+									}
 								} else {
 									// the next token is non-whitespace meaning this line
-									// uses illegal whitespace characters in its indentation
+									// uses illegal whitespace characters in its indentation;
 									throw scanner.error({
 										type: ErrorType.BAD_INDENTATION,
 										message: 'Bad indentation; indent can only be composed of tab characters',
@@ -208,72 +221,6 @@ exports.Lexer = (function() {
 										},
 									});
 								}
-							} else {
-								// handle non-whitespace, non-comment tokens
-								if (state.hasPassedFirstLine === false) {
-									// lines with 1+-level indentation are occuring before any
-									// lines with 0-level indentation, throw an error
-									throw scanner.error({
-										type: ErrorType.BAD_INDENTATION,
-										message: 'First line cannot be indented',
-										from: {
-											line: scanner.line,
-										},
-									});
-								} else {
-									if (currLineIndent > state.indent) {
-										if (currLineIndent === state.indent + 1) {
-											// current line increases level of indentation by 1
-											state.indent += 1;
-											pushToken(new Token(self, 'Indent', null, scanner.line, null));
-										} else {
-											// current line increases by more than 1 level of
-											// indentation, throw error
-											throw scanner.error({
-												type: ErrorType.BAD_INDENTATION,
-												message: 'Too much indentation',
-												from: {
-													line: scanner.line,
-												},
-											});
-										}
-									} else if (currLineIndent < state.indent) {
-										// current line has less indentation than previous lines
-										// dedent to resolve
-										while (state.indent > currLineIndent) {
-											state.indent -= 1;
-											pushToken(new Token(self, 'Dedent', null, scanner.line, null));
-										}
-									}
-								}
-
-								break;
-							}
-						} else if (isWhitespace(p)) {
-							// deal with non-tab whitespace at beginning of line
-							// if the line isn't empty (has non-whitespace characters)
-							// then throw an error
-
-							// consume non-newline whitespace characters
-							while (isWhitespace(p = scanner.peek()) && !isNewline(p)) {
-								scanner.next();
-							}
-
-							if (isNewline(p) || isNull(p)) {
-								// an upcoming newline or EOF means that this line was only
-								// filled with whitespace so return the next token
-								// and ignore this line
-								break;
-							} else {
-								// the next token is non-whitespace meaning this line
-								// uses illegal whitespace characters in its indentation;
-								throw scanner.error({
-									type: ErrorType.BAD_INDENTATION,
-									message: 'Bad indentation; indent can only be composed of tab characters',
-									from: {
-										line: scanner.line,
-									},
-								});
 							}
 						} else if (isCommentStart(p)) {
 							// consume comments that begin after a newline
@@ -289,9 +236,9 @@ exports.Lexer = (function() {
 								state.indent = 0;
 							}
 
-							if (state.indent > 0) {
+							if (state.indent > currLineIndent) {
 								// dedent 1 or more lines
-								while (state.indent > 0) {
+								while (state.indent > currLineIndent) {
 									state.indent -= 1;
 									pushToken(new Token(self, 'Dedent', null, scanner.line, null));
 								}

@@ -542,12 +542,20 @@ exports.Parser = (function() {
 			var latest = this.parseExpression();
 			body.push(latest);
 
-			this.next('Newline');
+			// look for end-of-line token after expression
+			if (this.peek('Newline')) {
+				this.next('Newline');
 
-			if (this.peek('Dedent')) {
+				if (this.peek('Dedent')) {
+					this.next('Dedent');
+					break;
+				} else {
+					continue;
+				}
+			} else if (this.peek('Dedent')) {
 				this.next('Dedent');
 				break;
-			} else if (this.peek('Indent') || this.peek('EOF')) {
+			} else if (this.peek('Indent') || this.peek('EOF') || this.peek() === null) {
 				var next = this.next();
 				throw next.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
