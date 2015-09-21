@@ -3,8 +3,19 @@
 ## TODO
 + Change token types to an enumerator like ErrorTypes
 + Improve PRINT to handle more than 1 argument
++ Rework error messages and error reporting (with remedy feature?)
 
 ## IDEAS
++ Classify parsing erros into Minor/Major
+	+ Parser can keep parsing after Minor errors so that multiple errors
+	  can be reported on a single validation pass
+	+ Minor errors:
+		+ Unknown binary operator
+		+ Unknown character
+	+ Major errors:
+		+ Bad indentation
+		+ Unexpected Token
+		+ Unexpected EOF
 + Add error advice features
     + Many errors could come with "advice": more details for the user
       about how the error could be corrected or where to look in the
