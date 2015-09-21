@@ -86,8 +86,8 @@ describe('Indentation', function() {
 		});
 	});
 
-	describe('Blocks', function () {
-		it('should allow for one or more lines in a block', function () {
+	describe('Blocks', function() {
+		it('should allow for one or more lines in a block', function() {
 			//|if True:
 			//|--->a = False
 			isValid('if True:\n\ta = False');
@@ -99,7 +99,7 @@ describe('Indentation', function() {
 			isValid('if True:\n\ta = 1\n\tb = 2\n\tc = 3');
 		});
 
-		it('should handle statements after block dedent', function () {
+		it('should handle statements after block dedent', function() {
 			//|if True:
 			//|--->a  = 1
 			//|--->b = 2
@@ -110,7 +110,7 @@ describe('Indentation', function() {
 			isValid('if True:\n\ta = 1\n\tb = 2\n\nif False:\n\tc = 3\n\td = 4');
 		});
 
-		it('should ignore empty lines before statements', function () {
+		it('should ignore empty lines before statements', function() {
 			//|
 			//|___# comment
 			//|if True:
@@ -123,7 +123,7 @@ describe('Indentation', function() {
 			isValid('\n   # comment\n\nif True:\n\ta = 1\n\tb = 2\n\nif False:\n\tc = 3\n\td = 4');
 		});
 
-		it('should ignore empty lines after statements', function () {
+		it('should ignore empty lines after statements', function() {
 			//|if True:
 			//|--->a = 1
 			//|--->b = 2
@@ -138,7 +138,7 @@ describe('Indentation', function() {
 			isValid('if True:\n\ta = 1\n\tb = 2\n\nif False:\n\tc = 3\n\td = 4\n\n\n   \n');
 		});
 
-		it('should close multiple blocks from a partial or fully dedented line', function () {
+		it('should close multiple blocks from a partial or fully dedented line', function() {
 			//|if True:
 			//|--->a = 1
 			//|--->if True:
@@ -161,7 +161,7 @@ describe('Indentation', function() {
 			isValid('if True:\n\ta = 1\n\tif True:\n\t\tb = 2\n');
 		});
 
-		it('should close multiple blocks from the end of the script', function () {
+		it('should close multiple blocks from the end of the script', function() {
 			//|if True:
 			//|--->a = 1
 			//|--->if True:
@@ -169,7 +169,7 @@ describe('Indentation', function() {
 			isValid('if True:\n\ta = 1\n\tif True:\n\t\tb = 2');
 		});
 
-		it('should only allow blocks to be created after legal block statements', function () {
+		it('should only allow blocks to be created after legal block statements', function() {
 			//|if True:
 			//|--->print(True)
 			isValid('if True:\n\tprint(True)');
