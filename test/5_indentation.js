@@ -4,9 +4,14 @@ var expect = require('chai').expect;
 var MiniPy = require('../build/minipy');
 
 describe('Indentation', function() {
+	var noop = function() {};
+
 	var isValid = function(script) {
-		var validity = MiniPy.validate(script);
-		expect(validity).to.be.true;
+		MiniPy.run(script, {
+			hooks: {
+				print: noop,
+			},
+		});
 	};
 
 	var isNotValid = function(script) {
@@ -197,6 +202,16 @@ describe('Indentation', function() {
 			//|--->b = False
 			//|--->c = False
 			isNotValid('a = True\n\tb = False\n\tc = False')
+		});
+	});
+
+	describe('Comments', function() {
+		it('should allow comments between statements', function () {
+			//|a = True
+			//|__# a comment
+			//|
+			//|b = False
+			isValid('a = True\n  # a comment\n\nb = False');
 		});
 	});
 });
