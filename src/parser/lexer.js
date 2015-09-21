@@ -363,6 +363,12 @@ exports.Lexer = (function() {
 							}
 						}
 
+						// TODO: the lexer isn't worried about multiple decimal
+						// points (which constitute and illegal literal) instead
+						// it relies on the JS `parseFloat` function to signal
+						// the error. consider making the lexer more cognizant of
+						// this possible error state
+
 						if (p === '.') {
 							value += scanner.next();
 
