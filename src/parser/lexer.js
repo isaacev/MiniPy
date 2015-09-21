@@ -170,6 +170,7 @@ exports.Lexer = (function() {
 								break;
 							} else if (isCommentStart(p)) {
 								// consume comments that begin after indentation
+								currLineIndent = 0;
 								consumeComment(scanner);
 							} else {
 								// handle non-empty line
