@@ -82,4 +82,4 @@
 
 		Error: exports.MiniPyError,
 	});
-}(root))
+}(root));
