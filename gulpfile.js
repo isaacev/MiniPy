@@ -1,11 +1,18 @@
 // [MiniPy] /gulpfile.js
 
 var gulp = require('gulp');
+
+// required for `build` task
 var concat = require('gulp-concat-util');
 var formatter = require('gulp-esformatter');
+
+// required for `test` task
+var mocha = require('gulp-mocha');
+
+// required for `bump` task
 var bump = require('gulp-bump');
 
-gulp.task('default', function() {
+gulp.task('build', function() {
 	gulp.src([
 		// header partial
 		'src/partials/header.js',
@@ -40,8 +47,18 @@ gulp.task('default', function() {
 		.pipe(gulp.dest('build'));
 });
 
+gulp.task('test', function() {
+	gulp.src('./test/*.js', { read: false })
+		.pipe(mocha({ reporter: 'progress' }));
+});
+
 gulp.task('bump', function() {
 	gulp.src('./package.json')
 		.pipe(bump())
 		.pipe(gulp.dest('./'));
 });
+
+gulp.task('default', [
+	'build',
+	'test',
+]);
