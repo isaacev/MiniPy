@@ -14,6 +14,25 @@ describe('Indentation', function() {
 		expect(validity).to.be.an.instanceof(MiniPy.Error);
 	};
 
+	describe('Empty Scripts', function() {
+		it('should handle an empty script', function() {
+			isValid('');
+		});
+
+		it('should handle a semantically empty script', function() {
+			//|
+			//|# a comment
+			//|--->
+			isValid('\n# a comment\n\t');
+
+			//|# a comment
+			//|--->
+			//|# second comment
+			//|
+			isValid('# a comment\n\t\n# second comment\n');
+		});
+	});
+
 	describe('Empty Lines', function() {
 		// an "empty" line has only whitespace or comments and is semantically insignificant
 		it('should ignore any empty lines between statements', function() {

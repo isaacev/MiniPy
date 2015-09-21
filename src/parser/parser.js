@@ -575,7 +575,10 @@ exports.Parser = (function() {
 			this.next('Newline');
 		}
 
-		while (true) {
+		// run until loop is broken of encounters EOF/null token. this
+		// condition is largely for semantically empty programs which
+		// may only have a Newline token followed by an EOF token
+		while (this.peek('EOF') === null && this.peek() !== null) {
 			var latest = this.parseExpression();
 			body.push(latest);
 
