@@ -3,6 +3,7 @@
 var gulp = require('gulp');
 var concat = require('gulp-concat-util');
 var formatter = require('gulp-esformatter');
+var bump = require('gulp-bump');
 
 gulp.task('default', function() {
 	gulp.src([
@@ -37,4 +38,10 @@ gulp.task('default', function() {
 		.pipe(concat.header('// MiniPy.js\n'))
 		.pipe(formatter({ indent: { value: '	', }, }))
 		.pipe(gulp.dest('build'));
+});
+
+gulp.task('bump', function() {
+	gulp.src('./package.json')
+		.pipe(bump())
+		.pipe(gulp.dest('./'));
 });
