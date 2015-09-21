@@ -1,12 +1,16 @@
 // [MiniPy] /src/parser/Token.js
 
 exports.Token = (function() {
+	var ErrorType = require('../enums').enums.ErrorType;
+	var TokenType = require('../enums').enums.TokenType;
+	var TokenTypeStrings = require('../enums').enums.TokenTypeStrings;
+
 	function Token(lexer, type, value, line, column) {
 		this.lexer = lexer;
 		this.type = type;
 
 		switch (type) {
-			case 'Numeric':
+			case TokenType.NUMBER:
 				this.raw = value;
 				this.value = parseFloat(value);
 
@@ -18,11 +22,11 @@ exports.Token = (function() {
 				}
 
 				break;
-			case 'Boolean':
+			case TokenType.BOOLEAN:
 				this.raw = value;
 				this.value = (value === 'True');
 				break;
-			case 'String':
+			case TokenType.STRING:
 				this.raw = '"' + value + '"';
 				this.value = value;
 				break;
@@ -38,7 +42,7 @@ exports.Token = (function() {
 		if (this.value !== null) {
 			return this.value;
 		} else {
-			return this.type;
+			return TokenTypeStrings[this.type];
 		}
 	};
 

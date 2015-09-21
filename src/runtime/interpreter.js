@@ -7,7 +7,7 @@ exports.Interpreter = (function() {
 	// + Change print statement to function (Python 3.0)
 	// + Operation type checking
 
-	var ErrorType = require('../error/errorType').ErrorType;
+	var ErrorType = require('../enums').enums.ErrorType;
 	var Scope = require('./scope').Scope;
 
 	// for preventing certain events from being called again and again

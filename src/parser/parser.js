@@ -1,7 +1,8 @@
 // [MiniPy] /src/parser/Parser.js
 
 exports.Parser = (function() {
-	var ErrorType = require('../error/errorType').ErrorType;
+	var ErrorType = require('../enums').enums.ErrorType;
+	var TokenType = require('../enums').enums.TokenType;
 
 	function Parser(lexer) {
 		var self = this;
@@ -26,7 +27,7 @@ exports.Parser = (function() {
 
 				// a syntactically static token (Literal, Identifier, etc.)
 				Atom: function(token) {
-					if (token.type === 'Identifier') {
+					if (token.type === TokenType.IDENTIFIER) {
 						this.type = 'Identifier';
 					} else {
 						this.type = 'Literal';
@@ -210,7 +211,7 @@ exports.Parser = (function() {
 					this.parse = function(parser, leftParenToken) {
 						var interior = parser.parseExpression();
 
-						self.next('Punctuator', ')');
+						self.next(TokenType.PUNCTUATOR, ')');
 
 						return interior;
 					};
@@ -226,18 +227,18 @@ exports.Parser = (function() {
 					this.parse = function(parser, leftParenToken, calleeExpression) {
 						var args = [];
 
-						while (self.peek('Punctuator', ')') === null) {
+						while (self.peek(TokenType.PUNCTUATOR, ')') === null) {
 							var arg = parser.parseExpression();
 							args.push(arg);
 
-							if (self.peek('Punctuator', ',') === null) {
+							if (self.peek(TokenType.PUNCTUATOR, ',') === null) {
 								break;
 							} else {
-								self.next('Punctuator', ',');
+								self.next(TokenType.PUNCTUATOR, ',');
 							}
 						}
 
-						var rightParenToken = self.next('Punctuator', ')');
+						var rightParenToken = self.next(TokenType.PUNCTUATOR, ')');
 
 						return new self.nodes.expressions.Call(calleeExpression, args, rightParenToken);
 					};
@@ -253,20 +254,20 @@ exports.Parser = (function() {
 					this.parse = function(parser, ifKeywordToken) {
 						var condition = self.parseExpression();
 
-						self.next('Punctuator', ':');
-						self.next('Newline');
+						self.next(TokenType.PUNCTUATOR, ':');
+						self.next(TokenType.NEWLINE);
 
 						var ifBlock = self.parseBlock();
 
 						// collect the `elif` blocks (if they exist)
 						var elifStatements = [];
 
-						while (self.peek('Keyword', 'elif') !== null) {
-							var elifKeywordToken = self.next('Keyword', 'elif');
+						while (self.peek(TokenType.KEYWORD, 'elif') !== null) {
+							var elifKeywordToken = self.next(TokenType.KEYWORD, 'elif');
 							var elifCondition = self.parseExpression();
 
-							self.next('Punctuator', ':');
-							self.next('Newline');
+							self.next(TokenType.PUNCTUATOR, ':');
+							self.next(TokenType.NEWLINE);
 
 							var elifBlock = self.parseBlock();
 
@@ -287,11 +288,11 @@ exports.Parser = (function() {
 						// collect the `else` block (if it exists)
 						var elseBlock = null;
 
-						if (self.peek('Keyword', 'else') !== null) {
-							var elseKeywordToken = self.next('Keyword', 'else');
+						if (self.peek(TokenType.KEYWORD, 'else') !== null) {
+							var elseKeywordToken = self.next(TokenType.KEYWORD, 'else');
 
-							self.next('Punctuator', ':');
-							self.next('Newline');
+							self.next(TokenType.PUNCTUATOR, ':');
+							self.next(TokenType.NEWLINE);
 
 							elseBlock = {
 								type: 'ElseStatement',
@@ -318,8 +319,8 @@ exports.Parser = (function() {
 					this.parse = function(parser, whileKeywordToken) {
 						var condition = self.parseExpression();
 
-						self.next('Punctuator', ':');
-						self.next('Newline');
+						self.next(TokenType.PUNCTUATOR, ':');
+						self.next(TokenType.NEWLINE);
 
 						var block = self.parseBlock();
 
@@ -446,17 +447,17 @@ exports.Parser = (function() {
 			}
 
 			// token doesn't match type or value
-			if (next.type === 'EOF' || next === null) {
+			if (next.type === TokenType.EOF || next === null) {
 				var curr = this.lexer.curr();
 				throw curr.error({
 					type: ErrorType.UNEXPECTED_EOF,
-					message: 'Unexpected end of file. Expected ' + (value || type).toUpperCase(),
+					message: 'Unexpected end of file. Expected ' + value.toUpperCase(),
 				});
 			} else {
 				var curr = this.lexer.curr();
 				throw curr.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
-					message: 'Unexpected ' + (curr.type).toUpperCase() + '. Expected ' + (value || type).toUpperCase(),
+					message: 'Unexpected ' + (curr.type).toUpperCase() + '. Expected ' + value.toUpperCase(),
 				});
 			}
 		}
@@ -488,7 +489,7 @@ exports.Parser = (function() {
 	// Numeric, Boolean, String, Keyword, Identifer tokens under the "Atom" umbrella
 	// and differentiating Punctuator tokens by their individual values
 	Parser.prototype.getTokenSymbol = function(token) {
-		if (token.type === 'Punctuator' || token.type === 'Keyword') {
+		if (token.type === TokenType.PUNCTUATOR || token.type === TokenType.KEYWORD) {
 			return token.getValue();
 		} else {
 			return 'Atom';
@@ -499,7 +500,7 @@ exports.Parser = (function() {
 	Parser.prototype.parseExpression = function(precedence) {
 		precedence = precedence || 0;
 
-		if (this.peek('EOF')) {
+		if (this.peek(TokenType.EOF)) {
 			// expression was abruptly ended by EOF
 			throw token.error({
 				type: ErrorType.UNEXPECTED_EOF,
@@ -522,7 +523,7 @@ exports.Parser = (function() {
 
 		// left-associate expressions based on their relative precedence
 		while (precedence < this.getPrecedence()) {
-			token = this.next('Punctuator');
+			token = this.next(TokenType.PUNCTUATOR);
 
 			var infix = this.symbols.infixParselets[this.getTokenSymbol(token)];
 			left = infix.parse(this, token, left);
@@ -534,7 +535,7 @@ exports.Parser = (function() {
 	// parse lists of single-line expressions preceeded by an Indent token and
 	// followed by a Dedent token
 	Parser.prototype.parseBlock = function() {
-		this.next('Indent');
+		this.next(TokenType.INDENT);
 
 		var body = [];
 
@@ -543,19 +544,19 @@ exports.Parser = (function() {
 			body.push(latest);
 
 			// look for end-of-line token after expression
-			if (this.peek('Newline')) {
-				this.next('Newline');
+			if (this.peek(TokenType.NEWLINE)) {
+				this.next(TokenType.NEWLINE);
 
-				if (this.peek('Dedent')) {
-					this.next('Dedent');
+				if (this.peek(TokenType.DEDENT)) {
+					this.next(TokenType.DEDENT);
 					break;
 				} else {
 					continue;
 				}
-			} else if (this.peek('Dedent')) {
-				this.next('Dedent');
+			} else if (this.peek(TokenType.DEDENT)) {
+				this.next(TokenType.DEDENT);
 				break;
-			} else if (this.peek('Indent') || this.peek('EOF') || this.peek() === null) {
+			} else if (this.peek(TokenType.INDENT) || this.peek(TokenType.EOF) || this.peek() === null) {
 				var next = this.next();
 				throw next.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
@@ -571,32 +572,32 @@ exports.Parser = (function() {
 		var body = [];
 
 		// consume first newline if it exists
-		if (this.peek('Newline')) {
-			this.next('Newline');
+		if (this.peek(TokenType.NEWLINE)) {
+			this.next(TokenType.NEWLINE);
 		}
 
 		// run until loop is broken of encounters EOF/null token. this
 		// condition is largely for semantically empty programs which
 		// may only have a Newline token followed by an EOF token
-		while (this.peek('EOF') === null && this.peek() !== null) {
+		while (this.peek(TokenType.EOF) === null && this.peek() !== null) {
 			var latest = this.parseExpression();
 			body.push(latest);
 
-			if (this.lexer.curr().type === 'Dedent') {
-				if (this.peek('EOF')) {
+			if (this.lexer.curr().type === TokenType.DEDENT) {
+				if (this.peek(TokenType.EOF)) {
 					break;
 				} else {
 					continue;
 				}
-			} else if (this.peek('Newline')) {
+			} else if (this.peek(TokenType.NEWLINE)) {
 				// expression followed by a Newline token
-				this.next('Newline');
+				this.next(TokenType.NEWLINE);
 
-				if (this.peek('EOF')) {
+				if (this.peek(TokenType.EOF)) {
 					// Newline token followed by an EOF token
 					break;
 				}
-			} else if (this.peek('EOF')) {
+			} else if (this.peek(TokenType.EOF)) {
 				// expression followed by an EOF token
 				break;
 			} else {
@@ -617,7 +618,7 @@ exports.Parser = (function() {
 			}
 		}
 
-		this.next('EOF');
+		this.next(TokenType.EOF);
 
 		return new this.nodes.expressions.Program(body);
 	};

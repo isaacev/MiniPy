@@ -1,7 +1,9 @@
 // [MiniPy] /src/parser/Lexer.js
 
 exports.Lexer = (function() {
-	var ErrorType = require('../error/errorType').ErrorType;
+	var ErrorType = require('../enums').enums.ErrorType;
+	var TokenType = require('../enums').enums.TokenType;
+
 	var Token = require('./token').Token;
 
 	function Lexer(scanner) {
@@ -105,7 +107,7 @@ exports.Lexer = (function() {
 				}
 			}
 
-			pushToken(new Token(self, 'Newline', sc.next(), sc.line, null));
+			pushToken(new Token(self, TokenType.NEWLINE, sc.next(), sc.line, null));
 		}
 
 		var tokenBuffer = [];
@@ -117,7 +119,7 @@ exports.Lexer = (function() {
 		function pushToken(token) {
 			var prev = tokenBuffer[tokenBuffer.length - 1];
 
-			if (!((prev && prev.type === 'Newline') && token.type === 'Newline')) {
+			if (!((prev && prev.type === TokenType.NEWLINE) && token.type === TokenType.NEWLINE)) {
 				tokenBuffer.push(token);
 			}
 		}
@@ -125,21 +127,21 @@ exports.Lexer = (function() {
 		function nextToken() {
 			if (scanner.EOF() === true) {
 				if (state.indent > 0) {
-					pushToken(new Token(self, 'Newline', null, null, null));
+					pushToken(new Token(self, TokenType.NEWLINE, null, null, null));
 
 					while (state.indent > 0) {
 						state.indent -= 1;
-						pushToken(new Token(self, 'Dedent', null, null, null));
+						pushToken(new Token(self, TokenType.DEDENT, null, null, null));
 					}
 				}
 
-				pushToken(new Token(self, 'EOF', null, scanner.line, scanner.column));
+				pushToken(new Token(self, TokenType.EOF, null, scanner.line, scanner.column));
 				return false;
 			} else {
 				var p = scanner.peek();
 
 				if (isNewline(p)) {
-					pushToken(new Token(self, 'Newline', scanner.next(), scanner.line, null));
+					pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), scanner.line, null));
 
 					var currLineIndent = 0;
 
@@ -149,7 +151,7 @@ exports.Lexer = (function() {
 						if (isNewline(p)) {
 							// emit Newline token
 							currLineIndent = 0;
-							pushToken(new Token(self, 'Newline', scanner.next(), scanner.line, null));
+							pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), scanner.line, null));
 						} else if (isWhitespace(p)) {
 							// collect all indentation first
 							var pureTabIndentation = true;
@@ -190,7 +192,7 @@ exports.Lexer = (function() {
 											if (currLineIndent === state.indent + 1) {
 												// current line increases level of indentation by 1
 												state.indent += 1;
-												pushToken(new Token(self, 'Indent', null, scanner.line, null));
+												pushToken(new Token(self, TokenType.INDENT, null, scanner.line, null));
 											} else {
 												// current line increases by more than 1 level of
 												// indentation, throw error
@@ -207,7 +209,7 @@ exports.Lexer = (function() {
 											// emit dedent tokens until fully resolved
 											while (state.indent > currLineIndent) {
 												state.indent -= 1;
-												pushToken(new Token(self, 'Dedent', null, scanner.line, null));
+												pushToken(new Token(self, TokenType.DEDENT, null, scanner.line, null));
 											}
 										}
 									}
@@ -241,7 +243,7 @@ exports.Lexer = (function() {
 								// dedent 1 or more lines
 								while (state.indent > currLineIndent) {
 									state.indent -= 1;
-									pushToken(new Token(self, 'Dedent', null, scanner.line, null));
+									pushToken(new Token(self, TokenType.DEDENT, null, scanner.line, null));
 								}
 							}
 
@@ -264,7 +266,6 @@ exports.Lexer = (function() {
 
 					if (isAlpha(p) || p === '_') {
 						// handle words (either identifiers or keywords)
-						var type = 'Identifier';
 						var line = scanner.line;
 						var column = scanner.column;
 						var value = scanner.next();
@@ -284,18 +285,19 @@ exports.Lexer = (function() {
 						}
 
 						if (isKeywordOperator(value)) {
-							type = 'Punctuator';
+							var type = TokenType.PUNCTUATOR;
 						} else if (isKeyword(value)) {
-							type = 'Keyword';
+							var type = TokenType.KEYWORD;
 						} else if (isBooleanLiteral(value)) {
-							type = 'Boolean';
+							var type = TokenType.BOOLEAN;
+						} else {
+							var type = TokenType.IDENTIFIER;
 						}
 
 						pushToken(new Token(self, type, value, line, column));
 						return true;
 					} else if (isNumeric(p)) {
 						// handle numbers
-						var type = 'Numeric';
 						var line = scanner.line;
 						var column = scanner.column;
 						var value = scanner.next();
@@ -349,11 +351,10 @@ exports.Lexer = (function() {
 							});
 						}
 
-						pushToken(new Token(self, type, value, line, column));
+						pushToken(new Token(self, TokenType.NUMBER, value, line, column));
 						return true;
 					} else if (p === '"' || p === '\'') {
 						// handle string literals
-						var type = 'String';
 						var line = scanner.line;
 						var column = scanner.column;
 						var quoteType = scanner.next();
@@ -465,12 +466,11 @@ exports.Lexer = (function() {
 							}
 						}
 
-						pushToken(new Token(self, type, value, line, column));
+						pushToken(new Token(self, TokenType.String, value, line, column));
 						return true;
 					} else if (contains(prefixOperatorCharacters, p) ||
 						contains(punctuationCharacters, p)) {
 						// handle operators
-						var type = 'Punctuator';
 						var line = scanner.line;
 						var column = scanner.column;
 						var value = scanner.next();
@@ -480,7 +480,7 @@ exports.Lexer = (function() {
 							value += scanner.next();
 						}
 
-						pushToken(new Token(self, type, value, line, column));
+						pushToken(new Token(self, TokenType.PUNCTUATOR, value, line, column));
 						return true;
 					}
 				}

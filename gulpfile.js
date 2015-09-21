@@ -18,7 +18,7 @@ gulp.task('build', function() {
 		'src/partials/header.js',
 
 		// error module
-		'src/error/errorType.js',
+		'src/enums.js',
 		'src/error/error.js',
 
 		// parser modules

@@ -1,7 +1,7 @@
 // [MiniPy] /src/runtime/Scope.js
 
 exports.Scope = (function() {
-	var ErrorType = require('../error/errorType').ErrorType;
+	var ErrorType = require('../enums').enums.ErrorType;
 
 	function Scope(parent) {
 		this.parent = parent || null;

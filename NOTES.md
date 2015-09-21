@@ -1,7 +1,6 @@
 # Notes
 
 ## TODO
-+ Change token types to an enumerator like ErrorTypes
 + Improve PRINT to handle more than 1 argument
 + Rework error messages and error reporting (with remedy feature?)
 
