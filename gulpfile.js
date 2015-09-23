@@ -40,7 +40,7 @@ gulp.task('build', function() {
 		// footer partial
 		'src/partials/footer.js',
 		])
-		.pipe(concat('minipy.js', {
+		.pipe(concat('minipy_v' + package.version + '.js', {
 			process: function(mod) {
 				return '\n' + mod.trim() + '\n';
 			},
