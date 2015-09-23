@@ -137,4 +137,38 @@ describe('Literals', function() {
 			expect(MiniPy.run.bind(MiniPy, 'false')).to.throw(MiniPy.Error);
 		});
 	});
+
+	describe('Array', function() {
+		describe('Initialization', function() {
+			it('should create an empty array', function() {
+				isValid('[]');
+			});
+
+			it('should create a simple array with literals with multiple types', function() {
+				isValid('[ 1, 2, 3, 4 ]');
+				isValid('[ "a", 2, "c" ]');
+			});
+
+			it('should allow arrays with hanging commas', function() {
+				isValid('[ 1, 2, 3, 4, ]');
+				isValid('[ , ]');
+			});
+
+			it('should create an array from variables', function() {
+				isValid('a = True\nb = False\n[a, b, 234]');
+			});
+
+			it('should permit array literal assignment', function() {
+				isValid('a = []');
+				isValid('a = [,]');
+				isValid('a = [1, 2, 3]');
+			});
+		});
+
+		describe('Subscript notation', function () {
+			it('should ', function (done) {
+				
+			});
+		});
+	});
 });
