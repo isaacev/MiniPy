@@ -3,6 +3,7 @@
 exports.Parser = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
 	var TokenType = require('../enums').enums.TokenType;
+	var TokenTypeStrings = require('../enums').enums.TokenTypeStrings;
 
 	function Parser(lexer) {
 		var self = this;
@@ -457,7 +458,7 @@ exports.Parser = (function() {
 				var curr = this.lexer.curr();
 				throw curr.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
-					message: 'Unexpected ' + (curr.type).toUpperCase() + '. Expected ' + value.toUpperCase(),
+					message: 'Unexpected ' + TokenTypeStrings[curr.type] + '. Expected ' + value.toUpperCase(),
 				});
 			}
 		}
@@ -515,7 +516,7 @@ exports.Parser = (function() {
 			// no prefix syntax registered with `token`'s symbol
 			throw token.error({
 				type: ErrorType.UNEXPECTED_TOKEN,
-				message: 'Unexpected ' + token.type + ' with value "' + token.getValue() + '"',
+				message: 'Unexpected ' + TokenTypeStrings[token.type] + ' with value "' + token.getValue() + '"',
 			});
 		}
 
