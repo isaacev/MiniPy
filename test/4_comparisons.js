@@ -8,7 +8,7 @@ describe('Comparison', function() {
 		MiniPy.run(script, {
 			globals: {
 				test: function(should, is) {
-					expect(is).to.equal(should);
+					expect(is.value).to.equal(should.value);
 				}
 			}
 		});
