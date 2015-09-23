@@ -240,6 +240,9 @@ exports.Type = (function() {
 				}
 
 				return new ArrayValue(concatenatedElements);
+			case '[':
+				// subscript syntax
+				return a[b];
 			default:
 				throw operatorToken.error({
 					type: ErrorType.UNKNOWN_OPERATION,

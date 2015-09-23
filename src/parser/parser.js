@@ -94,6 +94,17 @@ exports.Parser = (function() {
 					};
 				},
 
+				Subscript: function(root, subscript, leftBracketToken) {
+					this.type = 'Subscript';
+					this.root = root;
+					this.subscript = subscript;
+					this.operator = leftBracketToken;
+
+					this.error = function(details) {
+						return leftBracketToken.error(details);
+					};
+				},
+
 				// a method call
 				Call: function(callee, args, rightParenToken) {
 					this.type = 'CallExpression';
@@ -256,6 +267,23 @@ exports.Parser = (function() {
 						}
 
 						return new self.nodes.expressions.Array(elements);
+					};
+
+					this.getPrecedence = function() {
+						return precedence;
+					};
+				},
+
+				Subscript: function() {
+					var precedence = 80;
+
+					this.parse = function(parser, leftBracketToken, rootExpression) {
+						var subscriptIndex = parser.parseExpression();
+
+						// consume right bracket
+						self.next(TokenType.PUNCTUATOR, ']');
+
+						return new self.nodes.expressions.Subscript(rootExpression, subscriptIndex, leftBracketToken);
 					};
 
 					this.getPrecedence = function() {
@@ -432,6 +460,7 @@ exports.Parser = (function() {
 		prefix('not', 70);
 		prefix('!', 70);
 
+		infix('[', new self.nodes.parselets.Subscript());
 		infix('(', new self.nodes.parselets.Call());
 
 		prefix('if', new self.nodes.parselets.If());

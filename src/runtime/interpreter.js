@@ -212,6 +212,13 @@ exports.Interpreter = (function() {
 
 					var isUnary = false;
 					return left.operation(isUnary, operatorToken, right, node.right);
+				case 'Subscript':
+					var operator = node.operator;
+					var root = exec(node.root);
+					var subscript = exec(node.subscript);
+
+					var isUnary = false;
+					return root.operation(isUnary, operator, subscript, node.subscript);
 				case 'CallExpression':
 					var calleeIdentifier = node.callee.value;
 
