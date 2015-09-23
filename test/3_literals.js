@@ -3,8 +3,14 @@
 var expect = require('chai').expect;
 var MiniPy = require('../build/minipy');
 
-var isValid = function(isValid) {
-	expect(isValid).to.be.true;
+var noop = function() {};
+
+var isValid = function(script) {
+	MiniPy.run(script, {
+		hooks: {
+			print: noop,
+		},
+	});
 };
 
 var isNotValid = function(isValid) {
@@ -15,15 +21,15 @@ describe('Literals', function() {
 	describe('Strings', function() {
 		describe('Single quotes', function() {
 			it('should permit simple string', function() {
-				isValid(MiniPy.validate('\'abc\''));
+				isValid('\'abc\'');
 			});
 
 			it('should permit escaped single quote', function() {
-				isValid(MiniPy.validate('\'ab\\\'c\''));
+				isValid('\'ab\\\'c\'');
 			});
 
 			it('should permit double quotes escaped and not escaped', function() {
-				isValid(MiniPy.validate('\'a"bc\"def\''));
+				isValid('\'a"bc\"def\'');
 			});
 
 			it('should not permit newline character', function() {
@@ -45,15 +51,15 @@ describe('Literals', function() {
 
 		describe('Double quotes', function() {
 			it('should permit simple string', function() {
-				isValid(MiniPy.validate('"abc"'));
+				isValid('"abc"');
 			});
 
 			it('should permit escaped double quote', function() {
-				isValid(MiniPy.validate('"ab\\\"c"'));
+				isValid('"ab\\\"c"');
 			});
 
 			it('should permit single quote escaped and not escaped', function() {
-				isValid(MiniPy.validate('"abc\'d\\\'ef"'));
+				isValid('"abc\'d\\\'ef"');
 			});
 
 			it('should not permit newline character', function() {
@@ -77,18 +83,18 @@ describe('Literals', function() {
 	describe('Numbers', function() {
 		describe('Integers', function() {
 			it('should permit unsigned integers', function() {
-				isValid(MiniPy.validate('123'));
-				isValid(MiniPy.validate('0'));
+				isValid('123');
+				isValid('0');
 			});
 
 			it('should permit positively signed integers', function() {
-				isValid(MiniPy.validate('+456'));
-				isValid(MiniPy.validate('+001'));
+				isValid('+456');
+				isValid('+001');
 			});
 
 			it('should permit negatively signed integers', function() {
-				isValid(MiniPy.validate('-789'));
-				isValid(MiniPy.validate('-0'));
+				isValid('-789');
+				isValid('-0');
 			});
 		});
 
@@ -99,18 +105,18 @@ describe('Literals', function() {
 			});
 
 			it('should permit unsigned floats', function() {
-				isValid(MiniPy.validate('1.2'));
-				isValid(MiniPy.validate('0.345494949'));
+				isValid('1.2');
+				isValid('0.345494949');
 			});
 
 			it('should permit positively signed floats', function() {
-				isValid(MiniPy.validate('+2.3'));
-				isValid(MiniPy.validate('+123.0'));
+				isValid('+2.3');
+				isValid('+123.0');
 			});
 
 			it('should permit negatively signed floats', function() {
-				isValid(MiniPy.validate('-599384.0'));
-				isValid(MiniPy.validate('-123.5'));
+				isValid('-599384.0');
+				isValid('-123.5');
 			});
 
 			it('should not permit floats with multiple decimals', function() {
