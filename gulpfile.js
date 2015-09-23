@@ -9,6 +9,8 @@ var formatter = require('gulp-esformatter');
 // required for `test` task
 var mocha = require('gulp-mocha');
 
+var package = require('./package.json');
+
 // required for `bump` task
 var bump = require('gulp-bump');
 
@@ -43,7 +45,7 @@ gulp.task('build', function() {
 				return '\n' + mod.trim() + '\n';
 			},
 		}))
-		.pipe(concat.header('// MiniPy.js\n'))
+		.pipe(concat.header('// MiniPy.js v' + package.version + '\n'))
 		.pipe(formatter({ indent: { value: '	', }, }))
 		.pipe(gulp.dest('build'));
 });
