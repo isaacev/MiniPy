@@ -119,17 +119,17 @@ exports.Type = (function() {
 			case '**':
 				return new NumberValue(Math.pow(a, b));
 			case '>':
-				return new NumberValue(a > b);
+				return new BooleanValue(a > b);
 			case '>=':
-				return new NumberValue(a >= b);
+				return new BooleanValue(a >= b);
 			case '<':
-				return new NumberValue(a < b);
+				return new BooleanValue(a < b);
 			case '<=':
-				return new NumberValue(a <= b);
+				return new BooleanValue(a <= b);
 			case '==':
-				return new NumberValue(a === b);
+				return new BooleanValue(a === b);
 			case '!=':
-				return new NumberValue(a != b);
+				return new BooleanValue(a != b);
 			default:
 				throw operatorToken.error({
 					type: ErrorType.UNKNOWN_OPERATION,
@@ -181,10 +181,10 @@ exports.Type = (function() {
 				return new StringValue(a + b);
 			case '==':
 				expectOperandType(ValueType.STRING, 'string');
-				return new StringValue(a == b);
+				return new BooleanValue(a == b);
 			case '!=':
 				expectOperandType(ValueType.STRING, 'string');
-				return new StringValue(a != b);
+				return new BooleanValue(a != b);
 			case '[':
 				// subscript syntax
 				expectOperandType(ValueType.NUMBER, 'number');
