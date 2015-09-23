@@ -84,6 +84,16 @@ exports.Parser = (function() {
 					};
 				},
 
+				Array: function(elements) {
+					this.type = 'Literal';
+					this.subtype = TokenType.ARRAY;
+					this.elements = elements;
+
+					this.error = function(details) {
+						return elements[0].error(details);
+					};
+				},
+
 				// a method call
 				Call: function(callee, args, rightParenToken) {
 					this.type = 'CallExpression';
@@ -215,6 +225,37 @@ exports.Parser = (function() {
 						self.next(TokenType.PUNCTUATOR, ')');
 
 						return interior;
+					};
+
+					this.getPrecedence = function() {
+						return precedence;
+					};
+				},
+
+				Array: function() {
+					var precedence = 80;
+
+					this.parse = function(parser, leftBracketToken) {
+						var elements = [];
+
+						while (true) {
+							if (self.peek(TokenType.PUNCTUATOR, ']')) {
+								// break loop when end bracket encountered
+								self.next(TokenType.PUNCTUATOR);
+								break;
+							}
+
+							elements.push(parser.parseExpression());
+
+							if (self.peek(TokenType.PUNCTUATOR, ',')) {
+								self.next(TokenType.PUNCTUATOR, ',');
+							} else if (self.peek(TokenType.PUNCTUATOR, ']')) {
+								self.next(TokenType.PUNCTUATOR);
+								break;
+							}
+						}
+
+						return new self.nodes.expressions.Array(elements);
 					};
 
 					this.getPrecedence = function() {
@@ -364,6 +405,7 @@ exports.Parser = (function() {
 
 		prefix('Atom', new self.nodes.parselets.Atom());
 		prefix('(', new self.nodes.parselets.Group());
+		prefix('[', new self.nodes.parselets.Array());
 
 		infix('=', 10);
 

@@ -151,7 +151,7 @@ describe('Literals', function() {
 
 			it('should allow arrays with hanging commas', function() {
 				isValid('[ 1, 2, 3, 4, ]');
-				isValid('[ , ]');
+				isValid('[1,]');
 			});
 
 			it('should create an array from variables', function() {
@@ -160,14 +160,8 @@ describe('Literals', function() {
 
 			it('should permit array literal assignment', function() {
 				isValid('a = []');
-				isValid('a = [,]');
+				isValid('a = [1,]');
 				isValid('a = [1, 2, 3]');
-			});
-		});
-
-		describe('Subscript notation', function () {
-			it('should ', function (done) {
-				
 			});
 		});
 	});

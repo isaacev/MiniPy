@@ -187,9 +187,28 @@ exports.Type = (function() {
 		}
 	};
 
+	function ArrayValue(elements) {
+		this.type = 'Value';
+		this.value = elements;
+	}
+
+	ArrayValue.prototype.isType = function(test) {
+		return (test === ValueType.ARRAY);
+	};
+
+	ArrayValue.prototype.get = function(index) {
+		if (typeof index === 'number') {
+			// TODO: check to make sure index is in-range
+			return this.value[index];
+		} else {
+			return this.value;
+		}
+	};
+
 	return {
 		Boolean: BooleanValue,
 		Number: NumberValue,
 		String: StringValue,
+		Array: ArrayValue,
 	};
 }());

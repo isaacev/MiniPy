@@ -53,5 +53,6 @@ exports.enums = {
 		BOOLEAN: 0,
 		NUMBER: 1,
 		STRING: 2,
+		ARRAY: 3,
 	},
 };

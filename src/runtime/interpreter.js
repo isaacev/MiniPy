@@ -176,6 +176,12 @@ exports.Interpreter = (function() {
 							return new Type.Number(node.value);
 						case TokenType.STRING:
 							return new Type.String(node.value);
+						case TokenType.ARRAY:
+							var executedElements = node.elements.map(function (element) {
+								return exec(element);
+							});
+
+							return new Type.Array(executedElements);
 						default:
 							throw node.error({
 								type: ErrorType.UNEXPECTED_TOKEN,
