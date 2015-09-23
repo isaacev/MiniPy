@@ -303,7 +303,29 @@ exports.Interpreter = (function() {
 					var calleeIdentifier = node.callee.value;
 
 					if (calleeIdentifier === 'print') {
-						event('print', exec(node.arguments[0]));
+						var printArguments = [];
+
+						for (var i = 0, l = node.arguments.length; i < l; i++) {
+							if (node.arguments[i].type === 'Literal') {
+								// argument at `i` is a Literal already
+								var arg = exec(node.arguments[i]);
+								printArguments.push(arg.get());
+							} else if (node.arguments[i].type === 'Identifier') {
+								// argument at `i` is an identifier, so evaluate it
+								// to determine its type
+								var arg = exec(node.arguments[i]);
+
+								if (arg.type === 'Value') {
+									printArguments.push(arg.get());
+								} else {
+									throw new Error('Print arguments must be a value');
+								}
+							} else {
+								throw new Error('Print arguments must be a value');
+							}
+						}
+
+						event('print', printArguments);
 					} else {
 						// get identifier's value from scope
 						var fn = scope.get(node.callee);
