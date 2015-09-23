@@ -15,6 +15,7 @@ exports.enums = {
 		TYPE_VIOLATION: 11,
 		EXECUTION_TIMEOUT: 12,
 		UNKNOWN_OPERATION: 13,
+		OUT_OF_BOUNDS: 14,
 	},
 
 	TokenType: {

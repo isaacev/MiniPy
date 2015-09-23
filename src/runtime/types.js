@@ -162,11 +162,14 @@ exports.Type = (function() {
 			});
 		}
 
-		if (operand.isType(ValueType.STRING) === false) {
-			throw operandToken.error({
-				type: ErrorType.TYPE_VIOLATION,
-				message: 'Expected a string',
-			});
+		function expectOperandType(type, message) {
+			if (operand.isType(type) === false) {
+				// expect subscript operand to be of type number
+				throw operandToken.error({
+					type: ErrorType.TYPE_VIOLATION,
+					message: 'Expected a ' + message,
+				});
+			}
 		}
 
 		var a = this.value;
@@ -174,11 +177,30 @@ exports.Type = (function() {
 
 		switch (operatorToken.getValue()) {
 			case '+':
+				expectOperandType(ValueType.STRING, 'string');
 				return new StringValue(a + b);
 			case '==':
+				expectOperandType(ValueType.STRING, 'string');
 				return new StringValue(a == b);
 			case '!=':
+				expectOperandType(ValueType.STRING, 'string');
 				return new StringValue(a != b);
+			case '[':
+				// subscript syntax
+				expectOperandType(ValueType.NUMBER, 'number');
+
+				if (b >= a.length || -b > a.length) {
+					throw operatorToken.error({
+						type: ErrorType.OUT_OF_BOUNDS,
+						message: '"' + b + '" is out of bounds',
+					});
+				} else if (b < 0) {
+					// negative index
+					return new StringValue(a[a.length + b])
+				} else {
+					// positive index
+					return new StringValue(a[b]);
+				}
 			default:
 				throw operatorToken.error({
 					type: ErrorType.UNKNOWN_OPERATION,
@@ -214,11 +236,14 @@ exports.Type = (function() {
 			});
 		}
 
-		if (operand.isType(ValueType.NUMBER) === false) {
-			throw operandToken.error({
-				type: ErrorType.TYPE_VIOLATION,
-				message: 'Subscripts can only be numbers',
-			});
+		function expectOperandType(type, message) {
+			if (operand.isType(type) === false) {
+				// expect subscript operand to be of type number
+				throw operandToken.error({
+					type: ErrorType.TYPE_VIOLATION,
+					message: 'Expected a ' + message,
+				});
+			}
 		}
 
 		var a = this.value;
@@ -226,6 +251,7 @@ exports.Type = (function() {
 
 		switch (operatorToken.getValue()) {
 			case '+':
+				expectOperandType(ValueType.ARRAY, 'array');
 				// concatentate arrays
 				var concatenatedElements = [];
 
@@ -241,8 +267,21 @@ exports.Type = (function() {
 
 				return new ArrayValue(concatenatedElements);
 			case '[':
+				expectOperandType(ValueType.NUMBER, 'number');
+
 				// subscript syntax
-				return a[b];
+				if (b >= a.length || -b > a.length) {
+					throw operatorToken.error({
+						type: ErrorType.OUT_OF_BOUNDS,
+						message: '"' + b + '" is out of bounds',
+					});
+				} else if (b < 0) {
+					// negative index
+					return a[a.length + b];
+				} else {
+					// positive index
+					return a[b];
+				}
 			default:
 				throw operatorToken.error({
 					type: ErrorType.UNKNOWN_OPERATION,
