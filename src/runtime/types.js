@@ -205,6 +205,49 @@ exports.Type = (function() {
 		}
 	};
 
+	ArrayValue.prototype.operation = function(isUnary, operatorToken, operand, operandToken) {
+		if (isUnary === true) {
+			// there are only binary array operations
+			throw operandToken.error({
+				type: ErrorType.UNKNOWN_OPERATION,
+				message: 'Not a valid array operation',
+			});
+		}
+
+		if (operand.isType(ValueType.NUMBER) === false) {
+			throw operandToken.error({
+				type: ErrorType.TYPE_VIOLATION,
+				message: 'Subscripts can only be numbers',
+			});
+		}
+
+		var a = this.value;
+		var b = operand.get();
+
+		switch (operatorToken.getValue()) {
+			case '+':
+				// concatentate arrays
+				var concatenatedElements = [];
+
+				// add elements from `a` to new array
+				for (var i = 0, l = a.length; i < l; i++) {
+					concatenatedElements.push(a[i]);
+				}
+
+				// add elements from `b` to new array
+				for (var i = 0, l = b.length; i < l; i++) {
+					concatenatedElements.push(b[i]);
+				}
+
+				return new ArrayValue(concatenatedElements);
+			default:
+				throw operatorToken.error({
+					type: ErrorType.UNKNOWN_OPERATION,
+					message: 'Unknown operation with symbol "' + operatorToken.getValue() + '"',
+				});
+		}
+	};
+
 	return {
 		Boolean: BooleanValue,
 		Number: NumberValue,
