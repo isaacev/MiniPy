@@ -28,6 +28,7 @@ gulp.task('build', function() {
 		'src/parser/parser.js',
 
 		// runtime modules
+		'src/runtime/types.js',
 		'src/runtime/scope.js',
 		'src/runtime/interpreter.js',
 

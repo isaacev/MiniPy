@@ -9,6 +9,7 @@
 		lexer: 'Lexer',
 		parser: 'Parser',
 		scope: 'Scope',
+		types: 'Type',
 		interpreter: 'Interpreter',
 	};
 

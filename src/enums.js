@@ -14,6 +14,7 @@ exports.enums = {
 		UNDEFINED_VARIABLE: 10,
 		TYPE_VIOLATION: 11,
 		EXECUTION_TIMEOUT: 12,
+		UNKNOWN_OPERATION: 13,
 	},
 
 	TokenType: {
@@ -47,4 +48,10 @@ exports.enums = {
 		'String',
 		'Number',
 	],
+
+	ValueType: {
+		BOOLEAN: 0,
+		NUMBER: 1,
+		STRING: 2,
+	},
 };

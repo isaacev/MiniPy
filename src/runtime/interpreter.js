@@ -7,7 +7,10 @@ exports.Interpreter = (function() {
 	// + Change print statement to function (Python 3.0)
 	// + Operation type checking
 
+	var TokenType = require('../enums').enums.TokenType;
 	var ErrorType = require('../enums').enums.ErrorType;
+
+	var Type = require('./types').Type;
 	var Scope = require('./scope').Scope;
 
 	// for preventing certain events from being called again and again
@@ -166,139 +169,43 @@ exports.Interpreter = (function() {
 		function exec(node) {
 			switch (node.type) {
 				case 'Literal':
-					return node.value;
+					switch (node.subtype) {
+						case TokenType.BOOLEAN:
+							return new Type.Boolean(node.value);
+						case TokenType.NUMBER:
+							return new Type.Number(node.value);
+						case TokenType.STRING:
+							return new Type.String(node.value);
+						default:
+							throw node.error({
+								type: ErrorType.UNEXPECTED_TOKEN,
+								message: 'Unknown value',
+							});
+					}
+
+					break;
 				case 'Identifier':
 					return scope.get(node);
 				case 'AssignmentExpression':
-					var left = node.left;
-					var newValue = exec(node.right);
-					scope.set(left, newValue);
-					event('assign', [left.value, newValue]);
+					var assignee = node.left;
+					var value = exec(node.right);
+
+					scope.set(assignee, value);
+					event('assign', [assignee.value, value]);
 					break;
 				case 'UnaryExpression':
+					var operatorToken = node.operator;
 					var right = exec(node.right);
-					var rightType = typeof right;
 
-					function unaryOperationIncorrectTypes(message) {
-						return node.operator.error({
-							type: ErrorType.TYPE_VIOLATION,
-							message: message,
-						});
-					}
-
-					function expectOnce(operation, expected, actual) {
-						if (expected !== actual) {
-							var message = 'Unsupported operation "' + operation + '" ' +
-								'on type "' + actual + '"';
-							throw unaryOperationIncorrectTypes(message);
-						}
-					}
-
-					switch (node.operator.getValue()) {
-						case '+':
-							expectOnce('+', 'number', rightType);
-							return right;
-						case '-':
-							expectOnce('-', 'number', rightType);
-							return -1 * right;
-						case '!':
-						case 'not':
-							expectOnce(node.operator.getValue(), 'boolean', rightType);
-							return (right === false);
-						default:
-							throw node.operator.error({
-								type: 'SyntaxError',
-								message: 'Unknown operator: "' + node.operator.getValue() + '"',
-								from: {
-									line: node.line,
-									column: node.column,
-								},
-								to: {
-									line: node.line,
-									column: node.column + 1,
-								},
-							});
-					}
-
-					break;
+					var isUnary = true;
+					return right.operation(isUnary, operatorToken);
 				case 'BinaryExpression':
-					// TODO: check for type mismatch and return knowledgeable error message
+					var operatorToken = node.operator;
 					var left = exec(node.left);
 					var right = exec(node.right);
 
-					var leftType = typeof left;
-					var rightType = typeof right;
-
-					function binaryOperationIncorrectTypes(message) {
-						return node.operator.error({
-							type: ErrorType.TYPE_VIOLATION,
-							message: message,
-						});
-					}
-
-					// `el`: expected left type
-					// `er`: expected right type
-					// `al`: actual left type
-					// `ar`: actual right type
-					function expectTwice(operation, el, er, al, ar) {
-						if (al !== el || er !== ar) {
-							var message = 'Unsupported operation "' + operation + '" ' +
-								'for type(s) "' + al + '" and "' + ar + '"';
-							throw binaryOperationIncorrectTypes(message);
-						}
-					}
-
-					switch (node.operator.getValue()) {
-						case '+':
-							return left + right;
-						case '-':
-							expectTwice('-', 'number', 'number', leftType, rightType);
-							return left - right;
-						case '*':
-							expectTwice('*', 'number', 'number', leftType, rightType);
-							return left * right;
-						case '/':
-							expectTwice('/', 'number', 'number', leftType, rightType);
-							return left / right;
-						case '%':
-							expectTwice('%', 'number', 'number', leftType, rightType);
-							return left % right;
-						case '**':
-							expectTwice('**', 'number', 'number', leftType, rightType);
-							return Math.pow(left, right);
-						case '//':
-							// not technically correct, I believe Python technically
-							// does integer division (and thus truncation not rounding)
-							expectTwice('//', 'number', 'number', leftType, rightType);
-							return Math.floor(left / right);
-						case '>':
-							expectTwice('>', 'number', 'number', leftType, rightType);
-							return left > right;
-						case '>=':
-							expectTwice('>=', 'number', 'number', leftType, rightType);
-							return left >= right;
-						case '<':
-							expectTwice('<=', 'number', 'number', leftType, rightType);
-							return left < right;
-						case '<=':
-							expectTwice('<=', 'number', 'number', leftType, rightType);
-							return left <= right;
-						case '==':
-							return left === right;
-						case 'and':
-							expectTwice('and', 'boolean', 'boolean', leftType, rightType);
-							return (left === true) && (right === true);
-						case '!=':
-							return left !== right;
-						case 'or':
-							expectTwice('or', 'boolean', 'boolean', leftType, rightType);
-							return left || right;
-						default:
-							throw node.operator.error({
-								type: 'SyntaxError',
-								message: 'Unknown operator: "' + node.operator.getValue() + '"',
-							});
-					}
+					var isUnary = false;
+					return left.operation(isUnary, operatorToken, right, node.right);
 				case 'CallExpression':
 					var calleeIdentifier = node.callee.value;
 
@@ -347,7 +254,7 @@ exports.Interpreter = (function() {
 				case 'IfStatement':
 					var condition = exec(node.condition);
 
-					if (condition === true) {
+					if (condition.value === true) {
 						// IF block
 						pause(function() {
 							return execBlock(node.ifBlock);
@@ -371,7 +278,7 @@ exports.Interpreter = (function() {
 								if (thisCase.type === 'ElifStatement') {
 									var elifCondition = exec(thisCase.condition);
 
-									if (elifCondition === true) {
+									if (elifCondition.value === true) {
 										// condition matches, execute this "elif" block
 										pause(function() {
 											return execBlock(thisCase.block);
@@ -415,7 +322,7 @@ exports.Interpreter = (function() {
 						pause(function() {
 							var newCondition = exec(node.condition);
 
-							if (newCondition === true) {
+							if (newCondition.value === true) {
 								pause(function() {
 									return execBlock(node.block, loop);
 								});
@@ -428,7 +335,7 @@ exports.Interpreter = (function() {
 						});
 					};
 
-					if (condition === true) {
+					if (condition.value === true) {
 						pause(function() {
 							return execBlock(node.block, loop);
 						});

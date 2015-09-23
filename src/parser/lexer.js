@@ -290,6 +290,10 @@ exports.Lexer = (function() {
 							var type = TokenType.KEYWORD;
 						} else if (isBooleanLiteral(value)) {
 							var type = TokenType.BOOLEAN;
+
+							// in the case of boolean values, convert the string
+							// to a real boolean value
+							value = (value === 'True');
 						} else {
 							var type = TokenType.IDENTIFIER;
 						}
@@ -351,7 +355,16 @@ exports.Lexer = (function() {
 							});
 						}
 
-						pushToken(new Token(self, TokenType.NUMBER, value, line, column));
+						// try to parse the string to a real number
+						var parsed = parseFloat(value);
+
+						if (isNaN(parsed) === true) {
+							// throw an error if the JS parser couldn't make
+							// sense of the string
+							throw new Error('Could not parse number: "' + value + '"');
+						}
+
+						pushToken(new Token(self, TokenType.NUMBER, parsed, line, column));
 						return true;
 					} else if (p === '"' || p === '\'') {
 						// handle string literals
@@ -466,7 +479,7 @@ exports.Lexer = (function() {
 							}
 						}
 
-						pushToken(new Token(self, TokenType.String, value, line, column));
+						pushToken(new Token(self, TokenType.STRING, value, line, column));
 						return true;
 					} else if (contains(prefixOperatorCharacters, p) ||
 						contains(punctuationCharacters, p)) {
