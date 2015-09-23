@@ -213,22 +213,15 @@ exports.Interpreter = (function() {
 						var printArguments = [];
 
 						for (var i = 0, l = node.arguments.length; i < l; i++) {
-							if (node.arguments[i].type === 'Literal') {
-								// argument at `i` is a Literal already
-								var arg = exec(node.arguments[i]);
-								printArguments.push(arg.get());
-							} else if (node.arguments[i].type === 'Identifier') {
-								// argument at `i` is an identifier, so evaluate it
-								// to determine its type
-								var arg = exec(node.arguments[i]);
+							var argument = exec(node.arguments[i]);
 
-								if (arg.type === 'Value') {
-									printArguments.push(arg.get());
-								} else {
-									throw new Error('Print arguments must be a value');
-								}
+							if (argument.type === 'Value') {
+								printArguments.push(argument.get());
 							} else {
-								throw new Error('Print arguments must be a value');
+								throw node.arguments[i].error({
+									type: ErrorType.TYPE_VIOLATION,
+									message: 'Only concrete values (ex: booleans, numbers, strings) can be printed',
+								});
 							}
 						}
 
