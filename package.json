@@ -1,6 +1,6 @@
 {
   "name": "minipy",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "a subset of Python build in JavaScript with an interpreter for learning about programming",
   "main": "build/minipy.js",
   "directories": {
