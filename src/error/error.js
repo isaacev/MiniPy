@@ -10,7 +10,7 @@ exports.MiniPyError = (function() {
 
 		this.toString = function() {
 			return JSON.stringify(details, null, '   ');
-		}
+		};
 	}
 
 	return MiniPyError;
