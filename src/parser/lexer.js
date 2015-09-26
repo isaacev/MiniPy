@@ -132,7 +132,7 @@ exports.Lexer = (function() {
 
 					while (state.indent > 0) {
 						state.indent -= 1;
-						pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, scanner.column)));
+						pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, scanner.column, scanner.line, scanner.column + 1)));
 					}
 				}
 
@@ -197,7 +197,7 @@ exports.Lexer = (function() {
 											if (currLineIndent === state.indent + 1) {
 												// current line increases level of indentation by 1
 												state.indent += 1;
-												pushToken(new Token(self, TokenType.INDENT, null, RangeBuilder.create(scanner.line, 0)));
+												pushToken(new Token(self, TokenType.INDENT, null, RangeBuilder.create(scanner.line, 0, scanner.line, currLineIndent)));
 											} else {
 												// current line increases by more than 1 level of
 												// indentation, throw error
@@ -211,7 +211,7 @@ exports.Lexer = (function() {
 											// emit dedent tokens until fully resolved
 											while (state.indent > currLineIndent) {
 												state.indent -= 1;
-												pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, 0)));
+												pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, 0, scanner.line, currLineIndent)));
 											}
 										}
 									}
@@ -251,7 +251,7 @@ exports.Lexer = (function() {
 								// dedent 1 or more lines
 								while (state.indent > currLineIndent) {
 									state.indent -= 1;
-									pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, 0)));
+									pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, 0, scanner.line, currLineIndent)));
 								}
 							}
 
