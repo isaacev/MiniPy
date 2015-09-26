@@ -5,13 +5,11 @@ exports.Token = (function() {
 	var TokenType = require('../enums').enums.TokenType;
 	var TokenTypeStrings = require('../enums').enums.TokenTypeStrings;
 
-	function Token(lexer, type, value, line, column) {
+	function Token(lexer, type, value, range) {
 		this.lexer = lexer;
 		this.type = type;
 		this.value = value;
-
-		this.line = line;
-		this.column = column;
+		this.range = range;
 	}
 
 	Token.prototype.getValue = function() {
@@ -35,14 +33,8 @@ exports.Token = (function() {
 		return this.lexer.error({
 			type: details.type,
 			message: details.message,
-			from: details.from || {
-				line: this.line,
-				column: this.column,
-			},
-			to: details.to || {
-				line: this.line,
-				column: this.column + this.getLength(),
-			},
+			from: details.from || this.range.start,
+			to: details.to || this.range.end,
 		});
 	};
 

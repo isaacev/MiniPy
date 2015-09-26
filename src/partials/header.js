@@ -3,6 +3,7 @@
 
 	var moduleAliasNameMap = {
 		error: 'MiniPyError',
+		range: 'Range',
 		enums: 'enums',
 		scanner: 'Scanner',
 		token: 'Token',

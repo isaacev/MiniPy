@@ -21,6 +21,7 @@ gulp.task('build', function() {
 
 		// error module
 		'src/enums.js',
+		'src/error/range.js',
 		'src/error/error.js',
 
 		// parser modules

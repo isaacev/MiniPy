@@ -28,13 +28,7 @@ exports.Interpreter = (function() {
 	}
 
 	function Interpreter(ast, globals) {
-		// create global scope
-		function scopeErrorGenerator(details) {
-			return ast.error(details);
-		}
-
 		var scope = new Scope();
-		scope.setErrorGenerator(scopeErrorGenerator);
 
 		// load passed global variables into scope
 		globals = globals || {};
@@ -194,7 +188,6 @@ exports.Interpreter = (function() {
 					return scope.get(node);
 				case 'AssignmentExpression':
 					var assignee = node.left;
-					var value = exec(node.right);
 
 					scope.set(assignee, value);
 					event('assign', [assignee.value, value]);
@@ -263,7 +256,7 @@ exports.Interpreter = (function() {
 					if (condition.value === true) {
 						// IF block
 						pause(function() {
-							return execBlock(node.ifBlock);
+							return execBlock(node.ifBlock.statements);
 						});
 					} else {
 						// check ELIF or ELSE clauses
@@ -287,7 +280,7 @@ exports.Interpreter = (function() {
 									if (elifCondition.value === true) {
 										// condition matches, execute this "elif" block
 										pause(function() {
-											return execBlock(thisCase.block);
+											return execBlock(thisCase.block.statements);
 										});
 									} else {
 										// condition did not match, try next block
@@ -298,17 +291,17 @@ exports.Interpreter = (function() {
 
 									return {
 										type: 'ElifStatement',
-										line: thisCase.line,
+										range: thisCase.range,
 									};
 								} else if (thisCase.type === 'ElseStatement') {
 									// execution of "else" block
 									pause(function() {
-										return execBlock(thisCase.block);
+										return execBlock(thisCase.block.statements);
 									});
 
 									return {
 										type: 'ElseStatement',
-										line: thisCase.line,
+										range: thisCase.range,
 									};
 								}
 							}
@@ -330,20 +323,20 @@ exports.Interpreter = (function() {
 
 							if (newCondition.value === true) {
 								pause(function() {
-									return execBlock(node.block, loop);
+									return execBlock(node.block.statements, loop);
 								});
 							}
 
 							return {
 								type: 'WhileStatement',
-								line: node.line,
+								range: node.range,
 							};
 						});
 					};
 
 					if (condition.value === true) {
 						pause(function() {
-							return execBlock(node.block, loop);
+							return execBlock(node.block.statements, loop);
 						});
 					}
 
@@ -356,7 +349,7 @@ exports.Interpreter = (function() {
 				var node = nodes[0];
 				var detail = {
 					type: node.type,
-					line: getLine(node),
+					range: node.range,
 				};
 
 				if (nodes.length > 1) {
@@ -373,10 +366,6 @@ exports.Interpreter = (function() {
 
 				return detail;
 			}
-		}
-
-		function getLine(node) {
-			return node.line;
 		}
 
 		function registerHook(eventName, hook) {

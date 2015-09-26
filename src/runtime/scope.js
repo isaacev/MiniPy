@@ -8,10 +8,6 @@ exports.Scope = (function() {
 		this.local = {};
 	}
 
-	Scope.prototype.setErrorGenerator = function(errorGenerator) {
-		this.errorGenerator = errorGenerator;
-	};
-
 	Scope.prototype.isLocal = function(name) {
 		if (this.local.hasOwnProperty(name)) {
 			return true;
@@ -29,17 +25,10 @@ exports.Scope = (function() {
 			if (this.parent !== null && typeof this.parent.get === 'function') {
 				return this.parent.get(name);
 			} else {
-				throw this.errorGenerator({
+				throw node.range.error({
 					type: ErrorType.UNDEFINED_VARIABLE,
 					message: 'No variable with identifier "' + name + '"',
-					from: {
-						line: node.line,
-						column: node.column,
-					},
-					to: {
-						line: node.line,
-						column: node.column + name.length,
-					},
+					range: node.range,
 				});
 			}
 		}

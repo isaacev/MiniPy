@@ -8,6 +8,7 @@ exports.Lexer = (function() {
 
 	function Lexer(scanner) {
 		var self = this;
+		var RangeBuilder = require('../error/range').Range(scanner.input);
 
 		var prefixOperatorCharacters = '=<>+-*/&|%^~!';
 		var suffixOperatorCharacters = '=<>+-*/&|';
@@ -107,7 +108,7 @@ exports.Lexer = (function() {
 				}
 			}
 
-			pushToken(new Token(self, TokenType.NEWLINE, sc.next(), sc.line, null));
+			pushToken(new Token(self, TokenType.NEWLINE, sc.next(), RangeBuilder.create(scanner.line, 0)));
 		}
 
 		var tokenBuffer = [];
@@ -127,31 +128,35 @@ exports.Lexer = (function() {
 		function nextToken() {
 			if (scanner.EOF() === true) {
 				if (state.indent > 0) {
-					pushToken(new Token(self, TokenType.NEWLINE, null, null, null));
+					pushToken(new Token(self, TokenType.NEWLINE, null, RangeBuilder.create(scanner.line, scanner.column)));
 
 					while (state.indent > 0) {
 						state.indent -= 1;
-						pushToken(new Token(self, TokenType.DEDENT, null, null, null));
+						pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, scanner.column)));
 					}
 				}
 
-				pushToken(new Token(self, TokenType.EOF, null, scanner.line, scanner.column));
+				pushToken(new Token(self, TokenType.EOF, null, RangeBuilder.create(scanner.line, scanner.column)));
 				return false;
 			} else {
 				var p = scanner.peek();
 
 				if (isNewline(p)) {
-					pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), scanner.line, null));
+					pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), RangeBuilder.create(scanner.line, 0)));
 
 					var currLineIndent = 0;
+					var range = RangeBuilder.open(scanner.line, 0);
 
 					while (true) {
 						p = scanner.peek();
 
 						if (isNewline(p)) {
 							// emit Newline token
+							pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), RangeBuilder.create(scanner.line, 0)));
+
+							// reset indentation counters
 							currLineIndent = 0;
-							pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), scanner.line, null));
+							range = RangeBuilder.open(scanner.line, 0);
 						} else if (isWhitespace(p)) {
 							// collect all indentation first
 							var pureTabIndentation = true;
@@ -172,36 +177,33 @@ exports.Lexer = (function() {
 								break;
 							} else if (isCommentStart(p)) {
 								// consume comments that begin after indentation
-								currLineIndent = 0;
 								consumeComment(scanner);
+
+								// reset indentation counters
+								currLineIndent = 0;
+								range = RangeBuilder.open(scanner.line, 0);
 							} else {
 								// handle non-empty line
 								if (pureTabIndentation === true) {
 									if (state.hasPassedFirstLine === false) {
 										// first semantically significant line is
 										// indented, throw an error
-										throw scanner.error({
+										throw range.close(scanner.line, scanner.column).error({
 											type: ErrorType.BAD_INDENTATION,
 											message: 'First line cannot be indented',
-											from: {
-												line: scanner.line,
-											},
 										});
 									} else {
 										if (currLineIndent > state.indent) {
 											if (currLineIndent === state.indent + 1) {
 												// current line increases level of indentation by 1
 												state.indent += 1;
-												pushToken(new Token(self, TokenType.INDENT, null, scanner.line, null));
+												pushToken(new Token(self, TokenType.INDENT, null, RangeBuilder.create(scanner.line, 0)));
 											} else {
 												// current line increases by more than 1 level of
 												// indentation, throw error
-												throw scanner.error({
+												throw range.close(scanner.line, scanner.column).error({
 													type: ErrorType.BAD_INDENTATION,
 													message: 'Too much indentation',
-													from: {
-														line: scanner.line,
-													},
 												});
 											}
 										} else if (currLineIndent < state.indent) {
@@ -209,14 +211,16 @@ exports.Lexer = (function() {
 											// emit dedent tokens until fully resolved
 											while (state.indent > currLineIndent) {
 												state.indent -= 1;
-												pushToken(new Token(self, TokenType.DEDENT, null, scanner.line, null));
+												pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, 0)));
 											}
 										}
 									}
 								} else {
 									// the next token is non-whitespace meaning this line
-									// uses illegal whitespace characters in its indentation;
-									throw scanner.error({
+									// uses illegal whitespace characters in its indentation
+									// TODO: currently entire indentation is flagged in error, consider
+									// changing to only first flag illegal character?
+									throw range.close(scanner.line, scanner.column).error({
 										type: ErrorType.BAD_INDENTATION,
 										message: 'Bad indentation; indent can only be composed of tab characters',
 										from: {
@@ -228,6 +232,10 @@ exports.Lexer = (function() {
 						} else if (isCommentStart(p)) {
 							// consume comments that begin after a newline
 							consumeComment(scanner);
+
+							// reset indentation counters
+							currLineIndent = 0;
+							range = RangeBuilder.open(scanner.line, 0);
 						} else {
 							// line starts with a non-whitespace token
 							// deal with dedents when appropriate
@@ -243,7 +251,7 @@ exports.Lexer = (function() {
 								// dedent 1 or more lines
 								while (state.indent > currLineIndent) {
 									state.indent -= 1;
-									pushToken(new Token(self, TokenType.DEDENT, null, scanner.line, null));
+									pushToken(new Token(self, TokenType.DEDENT, null, RangeBuilder.create(scanner.line, 0)));
 								}
 							}
 
@@ -295,8 +303,7 @@ exports.Lexer = (function() {
 
 					if (isAlpha(p) || p === '_') {
 						// handle words (either identifiers or keywords)
-						var line = scanner.line;
-						var column = scanner.column;
+						var range = RangeBuilder.open(scanner.line, scanner.column);
 						var value = scanner.next();
 
 						while (true) {
@@ -327,12 +334,11 @@ exports.Lexer = (function() {
 							var type = TokenType.IDENTIFIER;
 						}
 
-						pushToken(new Token(self, type, value, line, column));
+						pushToken(new Token(self, type, value, range.close(scanner.line, scanner.column)));
 						return true;
 					} else if (isNumeric(p)) {
 						// handle numbers
-						var line = scanner.line;
-						var column = scanner.column;
+						var range = RangeBuilder.open(scanner.line, scanner.column);
 						var value = scanner.next();
 
 						// gather digits
@@ -370,17 +376,9 @@ exports.Lexer = (function() {
 						}
 
 						if (isAlpha(p)) {
-							throw scanner.error({
+							throw RangeBuilder.create(scanner.line, scanner.column, scanner.line, scanner.column + 1).error({
 								type: ErrorType.UNEXPECTED_CHARACTER,
 								message: 'Expected a digit',
-								from: {
-									line: scanner.line,
-									column: scanner.column,
-								},
-								to: {
-									line: scanner.line,
-									column: scanner.column + 1,
-								},
 							});
 						}
 
@@ -390,15 +388,17 @@ exports.Lexer = (function() {
 						if (isNaN(parsed) === true) {
 							// throw an error if the JS parser couldn't make
 							// sense of the string
-							throw new Error('Could not parse number: "' + value + '"');
+							throw range.close(scanner.line, scanner.column).error({
+								type: ErrorType.UNEXPECTED_CHARACTER,
+								message: 'Could not parse as number',
+							});
 						}
 
-						pushToken(new Token(self, TokenType.NUMBER, parsed, line, column));
+						pushToken(new Token(self, TokenType.NUMBER, parsed, range.close(scanner.line, scanner.column)));
 						return true;
 					} else if (p === '"' || p === '\'') {
 						// handle string literals
-						var line = scanner.line;
-						var column = scanner.column;
+						var range = RangeBuilder.open(scanner.line, scanner.column);
 						var quoteType = scanner.next();
 						var value = '';
 
@@ -407,50 +407,26 @@ exports.Lexer = (function() {
 
 							if (isNull(p)) {
 								// unexpected end of line
-								throw scanner.error({
+								throw range.close(scanner.line, scanner.column).error({
 									type: ErrorType.UNEXPECTED_EOF,
-									message: 'Unterminated string, expecting a matching end quote instead got end of program',
-									from: {
-										line: line,
-										column: column,
-									},
-									to: {
-										line: scanner.line,
-										column: scanner.column + 1,
-									},
+									message: 'Unterminated string; expecting a matching end quote instead got end of program',
 								});
 							} else if (p < ' ') {
 								// irregular character in literal
 								if (p === '\n' || p === '\r' || p === '') {
-									// advance scanner to get accurage
+									// advance scanner to get accurate
 									// line/column position
 									scanner.next();
 
-									throw scanner.error({
+									throw range.close(scanner.line, scanner.column).error({
 										type: ErrorType.UNEXPECTED_CHARACTER,
-										message: 'Unterminated string, expecting a matching end quote',
-										from: {
-											line: line,
-											column: column,
-										},
-										to: {
-											line: scanner.line,
-											column: scanner.column,
-										},
+										message: 'Unterminated string, expecting a matching end quote instead the line ended',
 									});
 								} else {
 									// catch control characters
-									throw scanner.error({
+									throw RangeBuilder.create(scanner.line, scanner.column, scanner.line, scanner.column + 1).error({
 										type: ErrorType.UNEXPECTED_CHARACTER,
 										message: 'Control character in string',
-										from: {
-											line: scanner.line,
-											column: scanner.column,
-										},
-										to: {
-											line: scanner.line,
-											column: scanner.column + 1,
-										},
 									});
 								}
 							} else if (p === quoteType) {
@@ -508,13 +484,12 @@ exports.Lexer = (function() {
 							}
 						}
 
-						pushToken(new Token(self, TokenType.STRING, value, line, column));
+						pushToken(new Token(self, TokenType.STRING, value, range.close(scanner.line, scanner.column)));
 						return true;
 					} else if (contains(prefixOperatorCharacters, p) ||
 						contains(punctuationCharacters, p)) {
 						// handle operators
-						var line = scanner.line;
-						var column = scanner.column;
+						var range = RangeBuilder.open(scanner.line, scanner.column);
 						var value = scanner.next();
 
 						if (contains(prefixOperatorCharacters, value) &&
@@ -522,22 +497,16 @@ exports.Lexer = (function() {
 							value += scanner.next();
 						}
 
-						pushToken(new Token(self, TokenType.PUNCTUATOR, value, line, column));
+						pushToken(new Token(self, TokenType.PUNCTUATOR, value, range.close(scanner.line, scanner.column)));
 						return true;
 					}
 				}
 
-				throw scanner.error({
+				// consume character for accurate line/column info
+
+				throw RangeBuilder.create(scanner.line, scanner.column, scanner.line, scanner.column + 1).error({
 					type: ErrorType.UNEXPECTED_CHARACTER,
 					message: 'Unexpected character',
-					from: {
-						line: scanner.line,
-						column: scanner.column,
-					},
-					to: {
-						line: scanner.line,
-						column: scanner.column + 1,
-					},
 				});
 			}
 		}

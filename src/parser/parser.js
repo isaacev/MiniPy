@@ -22,7 +22,7 @@ exports.Parser = (function() {
 					this.body = block;
 
 					this.error = function(details) {
-						return self.lexer.error(details);
+						return this.body.range.error(details);
 					};
 				},
 
@@ -37,11 +37,10 @@ exports.Parser = (function() {
 
 					this.value = token.getValue();
 
-					this.line = token.line;
-					this.column = token.column;
+					this.range = token.range;
 
 					this.error = function(details) {
-						return token.error(details);
+						return this.range.error(details);
 					};
 				},
 
@@ -50,141 +49,105 @@ exports.Parser = (function() {
 					this.operator = operator;
 					this.right = operand;
 
-					this.line = operator.line;
-					this.column = operator.column;
+					this.range = operator.range.union(operand.range);
 
 					this.error = function(details) {
-						switch (details.type) {
-							case ErrorType.UNEXPECTED_EOF:
-							case ErrorType.EXPECTED_NEWLINE:
-								return operand.error(details);
-							default:
-								return operator.error(details);
-						}
+						return operator.error(details);
 					};
 				},
 
-				Infix: function(operator, operandLeft, operandRight) {
+				Infix: function(operandLeft, operator, operandRight) {
 					this.type = (operator.getValue() === '=' ? 'AssignmentExpression' : 'BinaryExpression');
 					this.operator = operator;
 					this.left = operandLeft;
 					this.right = operandRight;
 
-					this.line = operator.line;
-					this.column = operator.column;
+					this.range = operandLeft.range.union(operandRight.range);
 
 					this.error = function(details) {
-						switch (details.type) {
-							case ErrorType.UNEXPECTED_EOF:
-							case ErrorType.EXPECTED_NEWLINE:
-								return operandRight.error(details);
-							default:
-								return operator.error(details);
-						}
+						return this.range.error(details);
 					};
 				},
 
-				Array: function(elements) {
+				Array: function(leftBracket, elements, rightBracket) {
 					this.type = 'Literal';
 					this.subtype = TokenType.ARRAY;
 					this.elements = elements;
 
+					this.range = leftBracket.range.union(rightBracket.range);
+
 					this.error = function(details) {
-						return elements[0].error(details);
+						return this.range.error(details);
 					};
 				},
 
-				Subscript: function(root, subscript, leftBracketToken) {
+				Subscript: function(root, leftBracket, subscript, rightBracket) {
 					this.type = 'Subscript';
 					this.root = root;
 					this.subscript = subscript;
-					this.operator = leftBracketToken;
+					this.operator = leftBracket;
+
+					this.range = root.range.union(rightBracket.range);
 
 					this.error = function(details) {
-						return leftBracketToken.error(details);
+						return this.range.error(details);
 					};
 				},
 
 				// a method call
-				Call: function(callee, args, rightParenToken) {
+				Call: function(callee, leftParen, args, rightParen) {
 					this.type = 'CallExpression';
 					this.callee = callee;
 					this.arguments = args;
 
-					this.line = callee.line;
-					this.column = callee.column;
+					this.range = callee.range.union(rightParen.range);
 
 					this.error = function(details) {
-						switch (details.type) {
-							case ErrorType.UNEXPECTED_EOF:
-							case ErrorType.EXPECTED_NEWLINE:
-								return rightParenToken.error(details);
-							default:
-								details.from = {
-									line: callee.line,
-									column: callee.column,
-								};
+						return this.range.error(details);
+					};
+				},
 
-								details.to = {
-									line: rightParenToken.line,
-									column: rightParenToken.column + 1,
-								};
+				Block: function(statements) {
+					this.type = 'Block';
+					this.statements = statements;
 
-								return callee.error(details);
-						}
+					this.range = statements[0].range.union(statements[statements.length - 1].range);
+
+					this.error = function(details) {
+						return this.range.error(details);
 					};
 				},
 
 				// an if/elif/else statement
-				If: function(ifKeywordToken, condition, ifBlock, elifBlocks, elseBlock) {
+				If: function(ifKeyword, condition, ifBlock, elifBlocks, elseBlock) {
 					this.type = 'IfStatement';
 					this.condition = condition;
 					this.ifBlock = ifBlock;
 					this.elifBlocks = elifBlocks;
 					this.elseBlock = elseBlock;
 
-					this.line = ifKeywordToken.line;
-					this.column = ifKeywordToken.column;
+					if (elseBlock !== null) {
+						this.range = ifKeyword.range.union(elseBlock.range);
+					} else if (elifBlocks !== null && elifBlocks.length > 0) {
+						this.range = ifKeyword.range.union(elifBlocks[elifBlocks.length - 1].range);
+					} else {
+						this.range = ifKeyword.range.union(ifBlock.range);
+					}
 
 					this.error = function(details) {
-						var lastBlock = ifBlock;
-
-						if (elseBlock !== null) {
-							lastBlock = elseBlock.block;
-						} else if (elifBlocks.length !== null && elifBlocks.length > 0) {
-							lastBlock = elifBlocks[elifBlocks.length - 1];
-						}
-
-						var lastExpression = lastBlock[lastBlock.length - 1];
-
-						switch (details.type) {
-							case ErrorType.UNEXPECTED_EOF:
-							case ErrorType.EXPECTED_NEWLINE:
-								return lastExpression.error(details);
-							default:
-								return ifKeywordToken.error(details);
-						}
+						return this.range.error(details);
 					};
 				},
 
-				While: function(whileKeywordToken, condition, block) {
+				While: function(whileKeyword, condition, block) {
 					this.type = 'WhileStatement';
 					this.condition = condition;
 					this.block = block;
 
-					this.line = whileKeywordToken.line;
-					this.column = whileKeywordToken.column;
+					this.range = whileKeyword.range.union(block.range);
 
 					this.error = function(details) {
-						var lastExpression = block[block.length - 1];
-
-						switch (details.type) {
-							case ErrorType.UNEXPECTED_EOF:
-							case ErrorType.EXPECTED_NEWLINE:
-								return lastExpression.error(details);
-							default:
-								return whileKeywordToken.error(details);
-						}
+						return this.range.error(details);
 					};
 				},
 			},
@@ -218,7 +181,7 @@ exports.Parser = (function() {
 					this.parse = function(parser, operatorToken, leftOperand) {
 						var rightOperand = parser.parseExpression(precedence);
 
-						return new self.nodes.expressions.Infix(operatorToken, leftOperand, rightOperand);
+						return new self.nodes.expressions.Infix(leftOperand, operatorToken, rightOperand);
 					};
 
 					this.getPrecedence = function() {
@@ -252,7 +215,7 @@ exports.Parser = (function() {
 						while (true) {
 							if (self.peek(TokenType.PUNCTUATOR, ']')) {
 								// break loop when end bracket encountered
-								self.next(TokenType.PUNCTUATOR);
+								var rightBracketToken = self.next(TokenType.PUNCTUATOR, ']');
 								break;
 							}
 
@@ -261,12 +224,12 @@ exports.Parser = (function() {
 							if (self.peek(TokenType.PUNCTUATOR, ',')) {
 								self.next(TokenType.PUNCTUATOR, ',');
 							} else if (self.peek(TokenType.PUNCTUATOR, ']')) {
-								self.next(TokenType.PUNCTUATOR);
+								var rightBracketToken = self.next(TokenType.PUNCTUATOR, ']');
 								break;
 							}
 						}
 
-						return new self.nodes.expressions.Array(elements);
+						return new self.nodes.expressions.Array(leftBracketToken, elements, rightBracketToken);
 					};
 
 					this.getPrecedence = function() {
@@ -281,9 +244,9 @@ exports.Parser = (function() {
 						var subscriptIndex = parser.parseExpression();
 
 						// consume right bracket
-						self.next(TokenType.PUNCTUATOR, ']');
+						var rightBracketToken = self.next(TokenType.PUNCTUATOR, ']');
 
-						return new self.nodes.expressions.Subscript(rootExpression, subscriptIndex, leftBracketToken);
+						return new self.nodes.expressions.Subscript(rootExpression, leftBracketToken, subscriptIndex, rightBracketToken);
 					};
 
 					this.getPrecedence = function() {
@@ -310,7 +273,7 @@ exports.Parser = (function() {
 
 						var rightParenToken = self.next(TokenType.PUNCTUATOR, ')');
 
-						return new self.nodes.expressions.Call(calleeExpression, args, rightParenToken);
+						return new self.nodes.expressions.Call(calleeExpression, leftParenToken, args, rightParenToken);
 					};
 
 					this.getPrecedence = function() {
@@ -345,9 +308,7 @@ exports.Parser = (function() {
 								type: 'ElifStatement',
 								condition: elifCondition,
 								block: elifBlock,
-
-								line: elifKeywordToken.line,
-								column: elifKeywordToken.column,
+								range: elifBlock.range,
 							});
 						}
 
@@ -364,12 +325,12 @@ exports.Parser = (function() {
 							self.next(TokenType.PUNCTUATOR, ':');
 							self.next(TokenType.NEWLINE);
 
+							var block = self.parseBlock();
+
 							elseBlock = {
 								type: 'ElseStatement',
-								block: self.parseBlock(),
-
-								line: elseKeywordToken.line,
-								column: elseKeywordToken.column,
+								block: block,
+								range: block.range,
 							};
 
 							// TODO: bundle elseKeywordToken line/column data with IfStatement
@@ -609,11 +570,11 @@ exports.Parser = (function() {
 	Parser.prototype.parseBlock = function() {
 		this.next(TokenType.INDENT);
 
-		var body = [];
+		var statements = [];
 
 		while (true) {
 			var latest = this.parseExpression();
-			body.push(latest);
+			statements.push(latest);
 
 			// look for end-of-line token after expression
 			if (this.peek(TokenType.NEWLINE)) {
@@ -637,7 +598,7 @@ exports.Parser = (function() {
 			}
 		}
 
-		return body;
+		return new this.nodes.expressions.Block(statements);
 	};
 
 	Parser.prototype.parseProgram = function() {

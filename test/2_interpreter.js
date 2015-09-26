@@ -27,12 +27,12 @@ describe('interpreter', function() {
 				var first = inspector.next();
 
 				expect(first).to.be.an('object').with.property('type').which.is.a('string');
-				expect(first).to.be.an('object').with.property('line').which.is.a('number');
+				expect(first).to.be.an('object').with.property('range').which.is.a('object');
 
 				var second = inspector.next();
 
 				expect(second).to.be.an('object').with.property('type').which.is.a('string');
-				expect(second).to.be.an('object').with.property('line').which.is.a('number');
+				expect(second).to.be.an('object').with.property('range').which.is.an('object');
 			});
 
 			it('should return null after exhausting expressions', function() {
