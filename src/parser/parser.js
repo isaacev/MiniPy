@@ -3,6 +3,7 @@
 exports.Parser = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
 	var TokenType = require('../enums').enums.TokenType;
+	var ValueType = require('../enums').enums.ValueType;
 	var TokenTypeStrings = require('../enums').enums.TokenTypeStrings;
 
 	function Parser(lexer) {
@@ -71,7 +72,7 @@ exports.Parser = (function() {
 
 				Array: function(leftBracket, elements, rightBracket) {
 					this.type = 'Literal';
-					this.subtype = TokenType.ARRAY;
+					this.subtype = ValueType.ARRAY;
 					this.elements = elements;
 
 					this.range = leftBracket.range.union(rightBracket.range);

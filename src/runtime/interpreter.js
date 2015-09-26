@@ -9,6 +9,7 @@ exports.Interpreter = (function() {
 
 	var TokenType = require('../enums').enums.TokenType;
 	var ErrorType = require('../enums').enums.ErrorType;
+	var ValueType = require('../enums').enums.ValueType;
 
 	var Type = require('./types').Type;
 	var Scope = require('./scope').Scope;
@@ -170,8 +171,8 @@ exports.Interpreter = (function() {
 							return new Type.Number(node.value);
 						case TokenType.STRING:
 							return new Type.String(node.value);
-						case TokenType.ARRAY:
-							var executedElements = node.elements.map(function (element) {
+						case ValueType.ARRAY:
+							var executedElements = node.elements.map(function(element) {
 								return exec(element);
 							});
 
