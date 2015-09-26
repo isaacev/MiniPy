@@ -19,41 +19,28 @@ exports.enums = {
 	},
 
 	TokenType: {
-		EOF: 0,
+		EOF: 'EOF',
 
 		// whitespace
-		NEWLINE: 1,
-		INDENT: 2,
-		DEDENT: 3,
+		NEWLINE: 'Newline',
+		INDENT: 'Indent',
+		DEDENT: 'Dedent',
 
 		// syntactic symbols
-		PUNCTUATOR: 4,
-		KEYWORD: 5,
-		IDENTIFIER: 6,
+		PUNCTUATOR: 'Punctuator',
+		KEYWORD: 'Keyword',
+		IDENTIFIER: 'Identifier',
 
 		// literals
-		BOOLEAN: 7,
-		STRING: 8,
-		NUMBER: 9,
+		BOOLEAN: 'Boolean',
+		STRING: 'String',
+		NUMBER: 'Number',
 	},
 
-	TokenTypeStrings: [
-		'EOF',
-		'Newline',
-		'Indent',
-		'Dedent',
-		'Punctuator',
-		'Keyword',
-		'Identifier',
-		'Boolean',
-		'String',
-		'Number',
-	],
-
 	ValueType: {
-		BOOLEAN: 0,
-		NUMBER: 1,
-		STRING: 2,
-		ARRAY: 3,
+		BOOLEAN: 'Boolean',
+		NUMBER: 'Number',
+		STRING: 'String',
+		ARRAY: 'Array',
 	},
 };
