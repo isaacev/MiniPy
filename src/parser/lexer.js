@@ -254,7 +254,36 @@ exports.Lexer = (function() {
 					return true;
 				} else if (isWhitespace(p)) {
 					// handle non-newline whitespace
-					scanner.next();
+					if (scanner.column === 0 && scanner.line === 0) {
+						// is the start of the very first line, if the first line is indented
+						// and is semantically significant, throw an error. if it's only
+						// whitespace or a comment, keep lexing
+
+						// gather all the whitespaces
+						var leadingWhitespace = '';
+						var range = RangeBuilder.open(0, 0);
+
+						while (isWhitespace(p = scanner.peek()) && !isNewline(p)) {
+							leadingWhitespace += scanner.next();
+						}
+
+						if (isCommentStart(p)) {
+							// leave the comment-parsing for later
+							return true;
+						} else if (isNewline(p) === false) {
+							// line was indented but is significant making
+							// the indentation illegal
+							throw range.close(0, leadingWhitespace.length).error({
+								type: ErrorType.BAD_INDENTATION,
+								message: 'First line cannot be indented',
+							});
+						}
+					} else {
+						// at any other point in the program, just consume
+						// the whitespace and move on
+						scanner.next();
+					}
+
 					return true;
 				} else if (isCommentStart(p)) {
 					consumeComment(scanner);
