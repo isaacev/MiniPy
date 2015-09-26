@@ -190,7 +190,7 @@ exports.Type = (function() {
 				expectOperandType(ValueType.NUMBER, 'number');
 
 				if (b >= a.length || -b > a.length) {
-					throw operatorToken.error({
+					throw operandToken.error({
 						type: ErrorType.OUT_OF_BOUNDS,
 						message: '"' + b + '" is out of bounds',
 					});
