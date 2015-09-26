@@ -648,11 +648,12 @@ exports.Parser = (function() {
 				break;
 			} else {
 				// expression followed by an illegal token
-				var curr = this.lexer.curr();
+				var badToken = this.peek() || this.lexer.curr();
 
-				throw curr.error({
+				throw badToken.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
-					message: 'Unexpected ' + curr.type,
+					message: 'Unexpected ' +
+						(badToken.type === TokenType.PUNCTUATOR ? badToken.value : badToken.type),
 				});
 			}
 		}
