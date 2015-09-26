@@ -50,8 +50,11 @@ exports.MiniPyError = (function() {
 			var paddingWidth = line.substring(0, this.from.column).replace(/\t/g, tab).length;
 			var padding = multiplyChar('_', paddingWidth);
 
-			var underlineWidth = line.substring(0, this.to.column || line.length).replace(/\t/g, tab).length - paddingWidth;
+			// var underlineWidth = line.substring(0, this.to.column || line.length).replace(/\t/g, tab).length - paddingWidth;
+			var underlineWidth = this.to.column - this.from.column;
 			var underline = multiplyChar('^', underlineWidth);
+
+			console.log('underlineWidth', this.to.column - this.from.column);
 
 			message += 'Error on line ' + (this.from.line + 1) + ': ' + this.message + '\n';
 

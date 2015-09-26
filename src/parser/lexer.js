@@ -108,7 +108,10 @@ exports.Lexer = (function() {
 				}
 			}
 
-			pushToken(new Token(self, TokenType.NEWLINE, sc.next(), RangeBuilder.create(scanner.line, 0)));
+			// emit Newline token
+			var prevLine = sc.line;
+			var prevColumn = sc.column;
+			pushToken(new Token(self, TokenType.NEWLINE, sc.next(), RangeBuilder.create(prevLine, prevColumn, prevLine, prevColumn + 1)));
 		}
 
 		var tokenBuffer = [];
@@ -128,7 +131,10 @@ exports.Lexer = (function() {
 		function nextToken() {
 			if (scanner.EOF() === true) {
 				if (state.indent > 0) {
-					pushToken(new Token(self, TokenType.NEWLINE, null, RangeBuilder.create(scanner.line, scanner.column)));
+					// emit Newline token
+					var prevLine = scanner.line;
+					var prevColumn = scanner.column;
+					pushToken(new Token(self, TokenType.NEWLINE, null, RangeBuilder.create(prevLine, prevColumn, prevLine, prevColumn + 1)));
 
 					while (state.indent > 0) {
 						state.indent -= 1;
@@ -142,7 +148,10 @@ exports.Lexer = (function() {
 				var p = scanner.peek();
 
 				if (isNewline(p)) {
-					pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), RangeBuilder.create(scanner.line, 0)));
+					// emit Newline token
+					var prevLine = scanner.line;
+					var prevColumn = scanner.column;
+					pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), RangeBuilder.create(prevLine, prevColumn, prevLine, prevColumn + 1)));
 
 					var currLineIndent = 0;
 					var range = RangeBuilder.open(scanner.line, 0);
@@ -152,7 +161,9 @@ exports.Lexer = (function() {
 
 						if (isNewline(p)) {
 							// emit Newline token
-							pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), RangeBuilder.create(scanner.line, 0)));
+							var prevLine = scanner.line;
+							var prevColumn = scanner.column;
+							pushToken(new Token(self, TokenType.NEWLINE, scanner.next(), RangeBuilder.create(prevLine, prevColumn, prevLine, prevColumn + 1)));
 
 							// reset indentation counters
 							currLineIndent = 0;
