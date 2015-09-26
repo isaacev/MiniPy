@@ -1,7 +1,7 @@
 // [MiniPy] /test/5_indentation.js
 
 var expect = require('chai').expect;
-var MiniPy = require('../build/minipy');
+var MiniPy = require('../build/' + require('../package.json').version);
 
 describe('Indentation', function() {
 	var noop = function() {};

@@ -40,7 +40,7 @@ gulp.task('build', function() {
 		// footer partial
 		'src/partials/footer.js',
 		])
-		.pipe(concat('minipy_v' + package.version + '.js', {
+		.pipe(concat(package.version + '.js', {
 			process: function(mod) {
 				return '\n' + mod.trim() + '\n';
 			},
@@ -50,18 +50,8 @@ gulp.task('build', function() {
 		.pipe(gulp.dest('build'));
 });
 
-gulp.task('test', function() {
-	gulp.src('./test/*.js', { read: false })
-		.pipe(mocha({ reporter: 'progress' }));
-});
-
 gulp.task('bump', function() {
 	gulp.src('./package.json')
 		.pipe(bump())
 		.pipe(gulp.dest('./'));
 });
-
-gulp.task('default', [
-	'build',
-	'test',
-]);

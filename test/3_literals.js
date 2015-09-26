@@ -1,7 +1,7 @@
 // [MiniPy] /test/3_language.js
 
 var expect = require('chai').expect;
-var MiniPy = require('../build/minipy');
+var MiniPy = require('../build/' + require('../package.json').version);
 
 var noop = function() {};
 

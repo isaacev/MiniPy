@@ -1,7 +1,7 @@
 // [MiniPy] /test/4_comparisons.js
 
 var expect = require('chai').expect;
-var MiniPy = require('../build/minipy');
+var MiniPy = require('../build/' + require('../package.json').version);
 
 describe('Comparison', function() {
 	function test(script) {
