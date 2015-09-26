@@ -636,19 +636,12 @@ exports.Parser = (function() {
 				break;
 			} else {
 				// expression followed by an illegal token
-				var next = this.next();
+				var curr = this.lexer.curr();
 
-				if (next !== null) {
-					throw next.error({
-						type: ErrorType.UNEXPECTED_TOKEN,
-						message: 'Expected the end of the program',
-					});
-				} else {
-					throw latest.error({
-						type: ErrorType.UNEXPECTED_EOF,
-						message: 'Expression was followed by an unexpected end of the program',
-					});
-				}
+				throw curr.error({
+					type: ErrorType.UNEXPECTED_TOKEN,
+					message: 'Unexpected ' + curr.type,
+				});
 			}
 		}
 
