@@ -48,7 +48,7 @@ exports.MiniPyError = (function() {
 			var line = this.source.split('\n')[this.from.line];
 
 			var paddingWidth = line.substring(0, this.from.column).replace(/\t/g, tab).length;
-			var padding = multiplyChar('-', paddingWidth);
+			var padding = multiplyChar('_', paddingWidth);
 
 			var underlineWidth = line.substring(0, this.to.column || line.length).replace(/\t/g, tab).length - paddingWidth;
 			var underline = multiplyChar('^', underlineWidth);
