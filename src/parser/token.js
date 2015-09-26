@@ -3,7 +3,6 @@
 exports.Token = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
 	var TokenType = require('../enums').enums.TokenType;
-	var TokenTypeStrings = require('../enums').enums.TokenTypeStrings;
 
 	function Token(lexer, type, value, range) {
 		this.lexer = lexer;
@@ -16,7 +15,7 @@ exports.Token = (function() {
 		if (this.value !== null) {
 			return this.value;
 		} else {
-			return TokenTypeStrings[this.type];
+			return this.type;
 		}
 	};
 
