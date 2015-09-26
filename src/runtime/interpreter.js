@@ -190,8 +190,55 @@ exports.Interpreter = (function() {
 				case 'AssignmentExpression':
 					var assignee = node.left;
 
-					scope.set(assignee, value);
-					event('assign', [assignee.value, value]);
+					if (assignee.type === 'Subscript') {
+						// value (array or string) on the left-hande side
+						// of the assignment
+						var root = exec(assignee.root);
+						var indexToChange = exec(assignee.subscript).value;
+
+						if (root instanceof Type.Array) {
+							if (indexToChange >= root.value.length || -indexToChange > root.value.length) {
+								throw assignee.subscript.error({
+									type: ErrorType.OUT_OF_BOUNDS,
+									message: 'Index ' + indexToChange + ' is out of bounds of array with length ' + root.value.length,
+								});
+							} else if (indexToChange < 0) {
+								// negative index (index telative to end of array)
+								root.value[root.value.length + indexToChange] = exec(node.right);
+							} else {
+								// positive index (index relative to start of array)
+								root.value[indexToChange] = exec(node.right);
+							}
+
+							// apply changes to scope
+							scope.set(assignee.root, root);
+
+							event('assign', [assignee.value, root]);
+						} else if (root instanceof Type.String) {
+							// strings are static, subscript notation cannot be used to modify them
+							throw assignee.error({
+								type: ErrorType.TYPE_VIOLATION,
+								message: 'String does not support item assignment',
+							});
+						} else {
+							// any other type values, general error message
+							throw assignee.error({
+								type: ErrorType.TYPE_VIOLATION,
+								message: 'Can only use subscript assignment on Arrays',
+							});
+						}
+					} else if (assignee.type === 'Identifier') {
+						// normal assignment to identifier
+						var value = exec(node.right);
+						scope.set(assignee, value);
+						event('assign', [assignee.value, value]);
+					} else {
+						throw assignee.error({
+							type: UNKNOWN_OPERATION,
+							message: 'Illegal left-hande side of assignment',
+						});
+					}
+
 					break;
 				case 'UnaryExpression':
 					var operatorToken = node.operator;
