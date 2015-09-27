@@ -213,6 +213,8 @@ exports.Interpreter = (function() {
 							// apply changes to scope
 							scope.set(assignee.root, root);
 
+							// DEPRECATED: use `scope` events instead
+							console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
 							event('assign', [assignee.value, root]);
 						} else if (root instanceof Type.String) {
 							// strings are static, subscript notation cannot be used to modify them
@@ -231,6 +233,9 @@ exports.Interpreter = (function() {
 						// normal assignment to identifier
 						var value = exec(node.right);
 						scope.set(assignee, value);
+
+						// DEPRECATED: use `scope` events instead
+						console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
 						event('assign', [assignee.value, value]);
 					} else {
 						throw assignee.error({
