@@ -324,7 +324,7 @@ exports.Interpreter = (function() {
 						for (var i = 0, l = node.arguments.length; i < l; i++) {
 							var argument = exec(node.arguments[i]);
 
-							if (argument.type === 'Value') {
+							if (['Boolean', 'Number', 'String'].indexOf(argument.type) >= 0) {
 								printArguments.push(argument.get());
 							} else {
 								throw node.arguments[i].error({

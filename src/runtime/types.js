@@ -5,7 +5,7 @@ exports.Type = (function() {
 	var ValueType = require('../enums').enums.ValueType;
 
 	function BooleanValue(value) {
-		this.type = 'Value';
+		this.type = 'Boolean';
 		this.value = value;
 	}
 
@@ -63,7 +63,7 @@ exports.Type = (function() {
 	};
 
 	function NumberValue(value) {
-		this.type = 'Value';
+		this.type = 'Number';
 		this.value = value;
 	}
 
@@ -148,7 +148,7 @@ exports.Type = (function() {
 	};
 
 	function StringValue(value) {
-		this.type = 'Value';
+		this.type = 'String';
 
 		// value is supplied having already been stripped of quotes
 		this.value = value;
@@ -219,7 +219,7 @@ exports.Type = (function() {
 	};
 
 	function ArrayValue(elements) {
-		this.type = 'Value';
+		this.type = 'Array';
 		this.value = elements;
 	}
 
