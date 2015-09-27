@@ -3,6 +3,25 @@
 exports.Scope = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
 
+	function simplifyValue(value) {
+		switch (value.type) {
+			case 'Boolean':
+			case 'Number':
+			case 'String':
+				return value.value;
+			case 'Array':
+				var simplification = [];
+
+				for (var i = 0, l = value.value.length; i < l; i++) {
+					simplification[i] = simplifyValue(value.value[i]);
+				}
+
+				return simplification;
+			default:
+				return undefined;
+		}
+	}
+
 	function Scope(parent) {
 		this.parent = parent || null;
 		this.local = {};
@@ -43,6 +62,29 @@ exports.Scope = (function() {
 			this.parent.set(name, value);
 		} else {
 			this.local[name] = value;
+		}
+	};
+
+	Scope.prototype.toJSON = function(subscope) {
+		var scope = {
+			variables: {},
+		};
+
+		if (subscope !== undefined) {
+			scope.subscope = subscope;
+		}
+
+		for (var name in this.local) {
+			if (this.local.hasOwnProperty(name)) {
+				scope.variables[name] = simplifyValue(this.local[name]);
+			}
+		}
+
+		// recursively include parent scopes
+		if (this.parent === null) {
+			return scope;
+		} else {
+			return this.parent(scope);
 		}
 	};
 

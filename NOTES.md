@@ -3,11 +3,6 @@
 ## TODO
 + Improve PRINT to handle more than 1 argument
 + Rework error messages and error reporting (with remedy feature?)
-+ Currently, variables whose values change when their references changes
-  won't have their new values reflected in external scope representations
-    + Send JSON `scope` representation on `assign` event?
-    + Include info about which variables reference other variables in
-      the scope object?
 
 ## IDEAS
 + For certain errors, have a "Fix" button which will make simple changes to

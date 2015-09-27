@@ -41,6 +41,7 @@ exports.Interpreter = (function() {
 
 		var validEventNames = [
 			'assign',
+			'scope',
 			'print',
 			'exit',
 		];
@@ -220,6 +221,9 @@ exports.Interpreter = (function() {
 
 							// DEPRECATED: use `scope` events instead
 							event('assign', [assignee.value, root]);
+
+							// call `scope` event
+							event('scope', [scope.toJSON()]);
 						} else if (root instanceof Type.String) {
 							// strings are static, subscript notation cannot be used to modify them
 							throw assignee.error({
@@ -240,6 +244,9 @@ exports.Interpreter = (function() {
 
 						// DEPRECATED: use `scope` events instead
 						event('assign', [assignee.value, value]);
+
+						// call `scope` event
+						event('scope', [scope.toJSON()]);
 					} else {
 						throw assignee.error({
 							type: UNKNOWN_OPERATION,
