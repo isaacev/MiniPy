@@ -71,6 +71,11 @@ exports.Interpreter = (function() {
 		function event(eventName, payload) {
 			if (validEventNames.indexOf(eventName) >= 0 &&
 				hooks[eventName] instanceof Array) {
+
+				if (hooks[eventName].length > 0 && eventName === 'assign') {
+					console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
+				}
+
 				hooks[eventName].forEach(function(hook) {
 					if (!(payload instanceof Array)) {
 						payload = [payload];
@@ -214,7 +219,6 @@ exports.Interpreter = (function() {
 							scope.set(assignee.root, root);
 
 							// DEPRECATED: use `scope` events instead
-							console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
 							event('assign', [assignee.value, root]);
 						} else if (root instanceof Type.String) {
 							// strings are static, subscript notation cannot be used to modify them
@@ -235,7 +239,6 @@ exports.Interpreter = (function() {
 						scope.set(assignee, value);
 
 						// DEPRECATED: use `scope` events instead
-						console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
 						event('assign', [assignee.value, value]);
 					} else {
 						throw assignee.error({
