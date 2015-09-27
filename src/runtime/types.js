@@ -17,24 +17,24 @@ exports.Type = (function() {
 		return this.value;
 	};
 
-	BooleanValue.prototype.operation = function(isUnary, operatorToken, operand, operandToken) {
+	BooleanValue.prototype.operation = function(isUnary, operatorSymbol, operandValue) {
 		var a = this.value,
 			b;
 
 		if (isUnary === false) {
-			if (operand.isType(ValueType.BOOLEAN) === false) {
-				throw operandToken.error({
+			if (operandValue.isType(ValueType.BOOLEAN) === false) {
+				throw {
 					type: ErrorType.TYPE_VIOLATION,
 					message: 'Expected a boolean',
-				});
+				};
 			}
 
 			// set `b` during binary operations to represent the computed
 			// value of the right operand
-			b = operand.get();
+			b = operandValue.get();
 		}
 
-		switch (operatorToken.getValue()) {
+		switch (operatorSymbol) {
 			case 'and':
 				return new BooleanValue(a && b);
 			case 'or':
@@ -45,20 +45,20 @@ exports.Type = (function() {
 					return new BooleanValue(!a);
 				} else {
 					// operator not being used as a unary operation
-					throw operatorToken.error({
+					throw {
 						type: ErrorType.UNKNOWN_OPERATION,
 						message: 'The "not" operator can only be used in the form: not <expression>',
-					});
+					};
 				}
 			case '==':
 				return new BooleanValue(a === b);
 			case '!=':
 				return new BooleanValue(a != b);
 			default:
-				throw operatorToken.error({
+				throw {
 					type: ErrorType.UNKNOWN_OPERATION,
-					message: 'Unknown operation with symbol "' + operatorToken.getValue() + '"',
-				});
+					message: 'Unknown operation with symbol "' + operatorSymbol + '"',
+				};
 		}
 	};
 
@@ -75,24 +75,24 @@ exports.Type = (function() {
 		return this.value;
 	};
 
-	NumberValue.prototype.operation = function(isUnary, operatorToken, operand, operandToken) {
+	NumberValue.prototype.operation = function(isUnary, operatorSymbol, operandValue) {
 		var a = this.value,
 			b;
 
 		if (isUnary === false) {
-			if (operand.isType(ValueType.NUMBER) === false) {
-				throw operandToken.error({
+			if (operandValue.isType(ValueType.NUMBER) === false) {
+				throw {
 					type: ErrorType.TYPE_VIOLATION,
 					message: 'Expected a number',
-				});
+				};
 			}
 
 			// set `b` during binary operations to represent the computed
 			// value of the right operand
-			b = operand.get();
+			b = operandValue.get();
 		}
 
-		switch (operatorToken.getValue()) {
+		switch (operatorSymbol) {
 			case '+':
 				return new NumberValue(a + b);
 			case '-':
@@ -107,10 +107,10 @@ exports.Type = (function() {
 				return new NumberValue(a * b);
 			case '/':
 				if (b === 0) {
-					throw operatorToken.error({
 						type: ErrorType.UNKNOWN_ERROR, // TODO: this is an inappropriate error type
+					throw {
 						message: 'Cannot divide by 0',
-					});
+					};
 				}
 
 				return new NumberValue(a / b);
@@ -131,10 +131,10 @@ exports.Type = (function() {
 			case '!=':
 				return new BooleanValue(a != b);
 			default:
-				throw operatorToken.error({
+				throw {
 					type: ErrorType.UNKNOWN_OPERATION,
-					message: 'Unknown operation with symbol "' + operatorToken.getValue() + '"',
-				});
+					message: 'Unknown operation with symbol "' + operatorSymbol + '"',
+				};
 		}
 	};
 
@@ -153,29 +153,29 @@ exports.Type = (function() {
 		return this.value;
 	};
 
-	StringValue.prototype.operation = function(isUnary, operatorToken, operand, operandToken) {
+	StringValue.prototype.operation = function(isUnary, operatorSymbol, operandValue) {
 		if (isUnary === true) {
 			// there are only binary string operations
-			throw operatorToken.error({
+			throw {
 				type: ErrorType.UNKNOWN_OPERATION,
 				message: 'Not a valid string operation',
-			});
+			};
 		}
 
 		function expectOperandType(type, message) {
-			if (operand.isType(type) === false) {
+			if (operandValue.isType(type) === false) {
 				// expect subscript operand to be of type number
-				throw operandToken.error({
+				throw {
 					type: ErrorType.TYPE_VIOLATION,
 					message: 'Expected a ' + message,
-				});
+				};
 			}
 		}
 
 		var a = this.value;
-		var b = operand.get();
+		var b = operandValue.get();
 
-		switch (operatorToken.getValue()) {
+		switch (operatorSymbol) {
 			case '+':
 				expectOperandType(ValueType.STRING, 'string');
 				return new StringValue(a + b);
@@ -190,10 +190,10 @@ exports.Type = (function() {
 				expectOperandType(ValueType.NUMBER, 'number');
 
 				if (b >= a.length || -b > a.length) {
-					throw operandToken.error({
+					throw {
 						type: ErrorType.OUT_OF_BOUNDS,
 						message: '"' + b + '" is out of bounds',
-					});
+					};
 				} else if (b < 0) {
 					// negative index
 					return new StringValue(a[a.length + b])
@@ -202,10 +202,10 @@ exports.Type = (function() {
 					return new StringValue(a[b]);
 				}
 			default:
-				throw operatorToken.error({
+				throw {
 					type: ErrorType.UNKNOWN_OPERATION,
-					message: 'Unknown operation with symbol "' + operatorToken.getValue() + '"',
-				});
+					message: 'Unknown operation with symbol "' + operatorSymbol + '"',
+				};
 		}
 	};
 
@@ -227,29 +227,29 @@ exports.Type = (function() {
 		}
 	};
 
-	ArrayValue.prototype.operation = function(isUnary, operatorToken, operand, operandToken) {
+	ArrayValue.prototype.operation = function(isUnary, operatorSymbol, operandValue) {
 		if (isUnary === true) {
 			// there are only binary array operations
-			throw operandToken.error({
+			throw {
 				type: ErrorType.UNKNOWN_OPERATION,
 				message: 'Not a valid array operation',
-			});
+			};
 		}
 
 		function expectOperandType(type, message) {
-			if (operand.isType(type) === false) {
+			if (operandValue.isType(type) === false) {
 				// expect subscript operand to be of type number
-				throw operandToken.error({
+				throw {
 					type: ErrorType.TYPE_VIOLATION,
 					message: 'Expected a ' + message,
-				});
+				};
 			}
 		}
 
 		var a = this.value;
-		var b = operand.get();
+		var b = operandValue.get();
 
-		switch (operatorToken.getValue()) {
+		switch (operatorSymbol) {
 			case '+':
 				expectOperandType(ValueType.ARRAY, 'array');
 				// concatentate arrays
@@ -271,10 +271,10 @@ exports.Type = (function() {
 
 				// subscript syntax
 				if (b >= a.length || -b > a.length) {
-					throw operatorToken.error({
+					throw {
 						type: ErrorType.OUT_OF_BOUNDS,
 						message: '"' + b + '" is out of bounds',
-					});
+					};
 				} else if (b < 0) {
 					// negative index
 					return a[a.length + b];
@@ -283,10 +283,10 @@ exports.Type = (function() {
 					return a[b];
 				}
 			default:
-				throw operatorToken.error({
+				throw {
 					type: ErrorType.UNKNOWN_OPERATION,
-					message: 'Unknown operation with symbol "' + operatorToken.getValue() + '"',
-				});
+					message: 'Unknown operation with symbol "' + operatorSymbol + '"',
+				};
 		}
 	};
 

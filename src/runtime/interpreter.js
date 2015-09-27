@@ -241,25 +241,80 @@ exports.Interpreter = (function() {
 
 					break;
 				case 'UnaryExpression':
-					var operatorToken = node.operator;
-					var right = exec(node.right);
+					var operatorSymbol = node.operator.value;
+					var rightValue = exec(node.right);
 
-					var isUnary = true;
-					return right.operation(isUnary, operatorToken);
+					try {
+						var isUnary = true;
+						var computedValue = rightValue.operation(isUnary, operatorSymbol);
+					} catch (details) {
+						// catch errors created by the operation and based on the error type,
+						// assign the errors to the offending expressions or tokens
+						switch (details.type) {
+							case ErrorType.TYPE_VIOLATION:
+								// errors caused by the operand
+								throw node.right.error(details);
+							case ErrorType.UNKNOWN_OPERATION:
+								// unknown operation for `rightValue`
+								throw node.operator.error(details);
+							default:
+								if (typeof details.type === 'number' && typeof details.message === 'string') {
+									// thrown object is { type: Number, message: String } and can be converted
+									throw node.error(details);
+								} else {
+									throw details;
+								}
+						}
+					}
+
+					return computedValue;
 				case 'BinaryExpression':
-					var operatorToken = node.operator;
-					var left = exec(node.left);
-					var right = exec(node.right);
+					var operatorSymbol = node.operator.value;
+					var leftValue = exec(node.left);
+					var rightValue = exec(node.right);
 
-					var isUnary = false;
-					return left.operation(isUnary, operatorToken, right, node.right);
+					try {
+						var isUnary = false;
+						var computedValue = leftValue.operation(isUnary, operatorSymbol, rightValue);
+					} catch (details) {
+						// catch errors created by the operation and based on the error type,
+						// assign the errors to the offending expressions or tokens
+						switch (details.type) {
+							case ErrorType.TYPE_VIOLATION:
+							case ErrorType.DIVIDE_BY_ZERO:
+								// errors caused by the right-hande operand
+								throw node.right.error(details);
+							case ErrorType.UNKNOWN_OPERATION:
+								// unknown operation for `leftValue`
+								throw node.operator.error(details);
+							default:
+								throw node.error(details);
+						}
+					}
+
+					return computedValue;
 				case 'Subscript':
-					var operator = node.operator;
-					var root = exec(node.root);
-					var subscript = exec(node.subscript);
+					var operatorSymbol = node.operator.value;
+					var rootValue = exec(node.root);
+					var subscriptValue = exec(node.subscript);
 
-					var isUnary = false;
-					return root.operation(isUnary, operator, subscript, node.subscript);
+					try {
+						var isUnary = false;
+						var computedValue = rootValue.operation(isUnary, operatorSymbol, subscriptValue);
+					} catch (details) {
+						// catch errors created by the operation and based on the error type,
+						// assign the errors to the offending expressions or tokens
+						switch (details.type) {
+							case ErrorType.TYPE_VIOLATION:
+							case ErrorType.OUT_OF_BOUNDS:
+								// errors caused by the subscript index
+								throw node.subscript.error(details);
+							default:
+								throw node.error(details);
+						}
+					}
+
+					return computedValue;
 				case 'CallExpression':
 					var calleeIdentifier = node.callee.value;
 
