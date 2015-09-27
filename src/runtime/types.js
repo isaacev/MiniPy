@@ -107,8 +107,8 @@ exports.Type = (function() {
 				return new NumberValue(a * b);
 			case '/':
 				if (b === 0) {
-						type: ErrorType.UNKNOWN_ERROR, // TODO: this is an inappropriate error type
 					throw {
+						type: ErrorType.DIVIDE_BY_ZERO,
 						message: 'Cannot divide by 0',
 					};
 				}
@@ -116,6 +116,13 @@ exports.Type = (function() {
 				return new NumberValue(a / b);
 			case '%':
 				return new NumberValue(a % b);
+				if (b === 0) {
+					throw {
+						type: ErrorType.DIVIDE_BY_ZERO,
+						message: 'Cannot modulo by 0',
+					};
+				}
+
 			case '**':
 				return new NumberValue(Math.pow(a, b));
 			case '>':

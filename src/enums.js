@@ -16,6 +16,7 @@ exports.enums = {
 		EXECUTION_TIMEOUT: 12,
 		UNKNOWN_OPERATION: 13,
 		OUT_OF_BOUNDS: 14,
+		DIVIDE_BY_ZERO: 15,
 	},
 
 	TokenType: {
