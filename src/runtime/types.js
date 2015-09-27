@@ -115,7 +115,6 @@ exports.Type = (function() {
 
 				return new NumberValue(a / b);
 			case '%':
-				return new NumberValue(a % b);
 				if (b === 0) {
 					throw {
 						type: ErrorType.DIVIDE_BY_ZERO,
@@ -123,6 +122,9 @@ exports.Type = (function() {
 					};
 				}
 
+				// use CoffeeScript's modulo function instead of JavaScript's
+				// incorrect implementation
+				return new NumberValue((a % b + b) % b);
 			case '**':
 				return new NumberValue(Math.pow(a, b));
 			case '>':
