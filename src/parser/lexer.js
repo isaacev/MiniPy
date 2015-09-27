@@ -142,7 +142,7 @@ exports.Lexer = (function() {
 					}
 				}
 
-				pushToken(new Token(self, TokenType.EOF, null, RangeBuilder.create(scanner.line, scanner.column)));
+				pushToken(new Token(self, TokenType.EOF, null, RangeBuilder.create(scanner.line, scanner.column, scanner.line, scanner.column + 1)));
 				return false;
 			} else {
 				var p = scanner.peek();
