@@ -3,23 +3,33 @@
 ## TODO
 + Improve PRINT to handle more than 1 argument
 + Rework error messages and error reporting (with remedy feature?)
++ Currently, variables whose values change when their references changes
+  won't have their new values reflected in external scope representations
+    + Send JSON `scope` representation on `assign` event?
+    + Include info about which variables reference other variables in
+      the scope object?
 
 ## IDEAS
++ For certain errors, have a "Fix" button which will make simple changes to
+  fix the error
+    + Unterminated string
+    + Missing end paren
+    + Missing end bracket?
 + Better formatting for printed complex numbers (ex: 3.0414093201713376e+64)
   given limited space of `.md-scope` and `.md-stdout`
     + Maybe truncate displayed values and let the user see the full value in
       the element `title` attribute?
     + Strings should be truncated after a certain length too
 + Classify parsing erros into Minor/Major
-	+ Parser can keep parsing after Minor errors so that multiple errors
-	  can be reported on a single validation pass
-	+ Minor errors:
-		+ Unknown binary operator
-		+ Unknown character
-	+ Major errors:
-		+ Bad indentation
-		+ Unexpected Token
-		+ Unexpected EOF
+    + Parser can keep parsing after Minor errors so that multiple errors
+      can be reported on a single validation pass
+    + Minor errors:
+        + Unknown binary operator
+        + Unknown character
+    + Major errors:
+        + Bad indentation
+        + Unexpected Token
+        + Unexpected EOF
 + Add error advice features
     + Many errors could come with "advice": more details for the user
       about how the error could be corrected or where to look in the
