@@ -214,31 +214,35 @@ exports.Parser = (function() {
 						var elements = [];
 
 						while (true) {
-							// TODO: try cleaning up these repeating if/else statements
 							if (self.peek(TokenType.PUNCTUATOR, ']')) {
-								// break loop when end bracket encountered
+								// break loop when right bracket found
 								var rightBracketToken = self.next(TokenType.PUNCTUATOR, ']');
 								break;
-							}
-
-							if (self.peek(TokenType.NEWLINE) === null) {
-								elements.push(parser.parseExpression());
-							}
-
-							if (self.peek(TokenType.PUNCTUATOR, ',')) {
-								self.next(TokenType.PUNCTUATOR, ',');
-							} else if (self.peek(TokenType.PUNCTUATOR, ']')) {
-								var rightBracketToken = self.next(TokenType.PUNCTUATOR, ']');
-								break;
-							} else {
-								// next token is not a comma or a right bracket
-								var badToken = self.peek() || this.lexer.curr();
+							} else if (self.peek(TokenType.NEWLINE)) {
+								// unexpected newline
+								var badToken = self.next();
 
 								throw badToken.error({
 									type: ErrorType.UNEXPECTED_TOKEN,
-									message: 'Expecting a comma or a right bracket, instead found ' +
-										(badToken.type === TokenType.PUNCTUATOR ? badToken.value : badToken.type),
+									message: 'Expecting an array element or a comma, instead found a Newline',
 								});
+							} else {
+								elements.push(parser.parseExpression());
+
+								if (self.peek(TokenType.PUNCTUATOR, ',')) {
+									// consume comma
+									self.next(TokenType.PUNCTUATOR, ',');
+								} else if (self.peek(TokenType.PUNCTUATOR, ']') === null) {
+									// next token is not an end bracket meaning the next
+									// token is not syntactically legal
+									var badToken = self.next();
+
+									throw badToken.error({
+										type: ErrorType.UNEXPECTED_TOKEN,
+										message: 'Expecting a comma or right bracket, instead found ' +
+											(badToken.type === TokenType.PUNCTUATOR ? badToken.value : badToken.type),
+									});
+								}
 							}
 						}
 
