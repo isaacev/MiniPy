@@ -99,7 +99,7 @@ exports.Parser = (function() {
 				Call: function(callee, leftParen, args, rightParen) {
 					this.type = 'CallExpression';
 					this.callee = callee;
-					this.arguments = args;
+					this.args = args;
 
 					this.range = callee.range.union(rightParen.range);
 
