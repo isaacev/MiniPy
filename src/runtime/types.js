@@ -4,6 +4,14 @@ exports.Type = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
 	var ValueType = require('../enums').enums.ValueType;
 
+	function NoneValue() {
+		this.type = 'None';
+	}
+
+	NoneValue.prototype.isType = function(test) {
+		return (test === ValueType.NONE);
+	};
+
 	function BooleanValue(value) {
 		this.type = 'Boolean';
 		this.value = value;
@@ -300,6 +308,7 @@ exports.Type = (function() {
 	};
 
 	return {
+		None: NoneValue,
 		Boolean: BooleanValue,
 		Number: NumberValue,
 		String: StringValue,
