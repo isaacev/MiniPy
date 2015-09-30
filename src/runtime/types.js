@@ -307,11 +307,23 @@ exports.Type = (function() {
 		}
 	};
 
+	function FunctionValue(blocking, exec) {
+		// defaults to `false`
+		this.type = 'Function';
+		this.blocking = (blocking === true);
+		this.exec = exec;
+	}
+
+	FunctionValue.prototype.isType = function(test) {
+		return (test === ValueType.FUNCTION);
+	};
+
 	return {
 		None: NoneValue,
 		Boolean: BooleanValue,
 		Number: NumberValue,
 		String: StringValue,
 		Array: ArrayValue,
+		Function: FunctionValue,
 	};
 }());
