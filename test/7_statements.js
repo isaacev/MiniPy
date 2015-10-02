@@ -97,14 +97,14 @@ describe('Statements', function() {
 		});
 	});
 
-	describe('While', function () {
-		it('should not execute if condition is immediately false', function () {
+	describe('While', function() {
+		it('should not execute if condition is immediately false', function() {
 			//|while False:
 			//|--->print("loop")
 			shouldPrint('while False:\n\tprint("loop")', []);
 		});
 
-		it('should execute as long as condition is true', function () {
+		it('should execute as long as condition is true', function() {
 			//|i = 0
 			//|while i < 5:
 			//|--->print(i)
