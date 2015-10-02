@@ -64,8 +64,8 @@
 
 				break;
 			} else if (linesExecuted >= maxLinesExecuted) {
-				var MiniPyError = require('./error/error');
-				var ErrorType = require('./error/errorType');
+				var MiniPyError = require('./error/error').MiniPyError;
+				var ErrorType = require('./enums').enums.ErrorType;
 
 				throw new MiniPyError(code, {
 					type: ErrorType.EXECUTION_TIMEOUT,
