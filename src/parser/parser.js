@@ -4,7 +4,6 @@ exports.Parser = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
 	var TokenType = require('../enums').enums.TokenType;
 	var ValueType = require('../enums').enums.ValueType;
-	var TokenTypeStrings = require('../enums').enums.TokenTypeStrings;
 
 	function Parser(lexer) {
 		var self = this;
@@ -595,13 +594,13 @@ exports.Parser = (function() {
 				var curr = this.lexer.curr();
 				throw curr.error({
 					type: ErrorType.UNEXPECTED_EOF,
-					message: 'Unexpected end of file. Expected ' + value.toUpperCase(),
+					message: 'Unexpected end of file. Expected ' + (value || type),
 				});
 			} else {
 				var curr = this.lexer.curr();
 				throw curr.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
-					message: 'Unexpected ' + TokenTypeStrings[curr.type] + '. Expected ' + value.toUpperCase(),
+					message: 'Unexpected ' + curr.type + '. Expected ' + (value || type),
 				});
 			}
 		}
@@ -659,7 +658,7 @@ exports.Parser = (function() {
 			// no prefix syntax registered with `token`'s symbol
 			throw token.error({
 				type: ErrorType.UNEXPECTED_TOKEN,
-				message: 'Unexpected ' + TokenTypeStrings[token.type] + ' with value "' + token.getValue() + '"',
+				message: 'Unexpected ' + token.type + ' with value "' + token.getValue() + '"',
 			});
 		}
 
