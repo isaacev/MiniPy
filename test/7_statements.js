@@ -16,6 +16,10 @@ describe('Statements', function() {
 		expect(expectations).to.have.length(0);
 	}
 
+	function shouldFail(script) {
+		expect(MiniPy.run.bind(MiniPy, script)).to.throw(MiniPy.Error);
+	}
+
 	describe('If', function() {
 		it('should run lone IF statement', function() {
 			//|if True:
@@ -106,6 +110,13 @@ describe('Statements', function() {
 			//|--->print(i)
 			//|print(i + 10)
 			shouldPrint('i = 0\nwhile i < 5:\n\tprint(i)\n\ti = i + 1\nprint(i + 10)', [0, 1, 2, 3, 4, 15]);
+		});
+
+		it('should throw an error if a loop continues for too long', function() {
+			//|i = 0
+			//|while i >= 0:
+			//|--->i = i + 1
+			shouldFail('i = 0\nwhile i >= 0:\n\ti = i + 1');
 		});
 	});
 });
