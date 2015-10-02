@@ -8,7 +8,7 @@ describe('Indentation', function() {
 
 	var isValid = function(script) {
 		MiniPy.run(script, {
-			hooks: {
+			globals: {
 				print: noop,
 			},
 		});

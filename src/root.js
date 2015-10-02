@@ -6,11 +6,7 @@
 	var Parser = require('./parser/parser').Parser;
 	var Interpreter = require('./runtime/interpreter').Interpreter;
 
-	var defaultHooks = {
-		print: function(arg) {
-			console.log('PRINT: ' + arg);
-		},
-	};
+	var defaultHooks = {};
 
 	var defaultMaxLinesExecuted = 2000;
 

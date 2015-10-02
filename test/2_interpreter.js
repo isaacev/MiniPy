@@ -6,9 +6,12 @@ var MiniPy = require('../build/' + require('../package.json').version);
 var defaultInspectOptions = {
 	hooks: {
 		print: function() {},
-		assign: function() {},
+		scope: function() {},
 		exit: function() {},
 	},
+	globals: {
+		print: function () {},
+	}
 };
 
 describe('interpreter', function() {
@@ -51,20 +54,17 @@ describe('interpreter', function() {
 			it('should attach hook for execution events', function() {
 				var inspector = MiniPy.inspect('x = 1\nprint("foo")\nx = 4', defaultInspectOptions);
 
-				var assignments = 0;
-				var prints = 0;
+				var scopeChanges = 0;
+				var exit = false;
 
-				inspector.on('assign', function(variable, value) {
-					expect(variable).to.be.a('string');
-					expect(value).to.exist;
+				inspector.on('scope', function(scopeJSON) {
+					expect(scopeJSON).to.be.an('object');
 
-					assignments++;
+					scopeChanges++;
 				});
 
-				inspector.on('print', function(output) {
-					expect(output).to.be.a('string');
-
-					prints++;
+				inspector.on('exit', function() {
+					exit = true;
 				});
 
 				inspector.next(); // x = 1
@@ -72,8 +72,8 @@ describe('interpreter', function() {
 				inspector.next(); // x = 4
 				inspector.next(); // null
 
-				expect(assignments).to.equal(2);
-				expect(prints).to.equal(1);
+				expect(scopeChanges).to.equal(2);
+				expect(exit).to.be.true;
 			});
 
 			it('should attach hook to exit event', function() {

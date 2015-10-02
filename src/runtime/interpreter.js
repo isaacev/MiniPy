@@ -73,9 +73,7 @@ exports.Interpreter = (function() {
 		});
 
 		var validEventNames = [
-			'assign',
 			'scope',
-			'print',
 			'exit',
 		];
 
@@ -116,10 +114,6 @@ exports.Interpreter = (function() {
 		function event(eventName, payload) {
 			if (validEventNames.indexOf(eventName) >= 0 &&
 				hooks[eventName] instanceof Array) {
-
-				if (hooks[eventName].length > 0 && eventName === 'assign') {
-					console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
-				}
 
 				hooks[eventName].forEach(function(hook) {
 					if (!(payload instanceof Array)) {
@@ -350,9 +344,6 @@ exports.Interpreter = (function() {
 							// normal assignment to identifier
 							scope.set(assignee, rightValue);
 
-							// DEPRECATED: use `scope` events instead
-							event('assign', [assignee.value, rightValue]);
-
 							// call `scope` event
 							event('scope', [scope.toJSON()]);
 
@@ -381,8 +372,7 @@ exports.Interpreter = (function() {
 												// apply changes to scope
 												scope.set(assignee.root, rootValue);
 
-												// call applicable events
-												event('assign', [assignee.value, rootValue]);
+												// call applicable event
 												event('scope', [scope.toJSON()]);
 											});
 										}
@@ -680,10 +670,6 @@ exports.Interpreter = (function() {
 									break;
 								default:
 									returnValue = new Type.None();
-							}
-
-							if (node.callee.value === 'print') {
-								event('print', simplifyValue(callArgValues)[0]);
 							}
 
 							done(returnValue);
