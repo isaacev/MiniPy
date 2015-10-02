@@ -6,11 +6,7 @@
 	var Parser = require('./parser/parser').Parser;
 	var Interpreter = require('./runtime/interpreter').Interpreter;
 
-	var defaultHooks = {
-		print: function(arg) {
-			console.log('PRINT: ' + arg);
-		},
-	};
+	var defaultHooks = {};
 
 	var defaultMaxLinesExecuted = 2000;
 
@@ -64,8 +60,8 @@
 
 				break;
 			} else if (linesExecuted >= maxLinesExecuted) {
-				var MiniPyError = require('./error/error');
-				var ErrorType = require('./error/errorType');
+				var MiniPyError = require('./error/error').MiniPyError;
+				var ErrorType = require('./enums').enums.ErrorType;
 
 				throw new MiniPyError(code, {
 					type: ErrorType.EXECUTION_TIMEOUT,

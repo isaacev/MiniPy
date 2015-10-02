@@ -199,7 +199,7 @@ describe('Operations', function() {
 			test('test("a", ["a", "b", "c", "d"][-4])');
 		});
 
-		it('should element modification with subscript notation', function() {
+		it('should allow element modification with subscript notation', function() {
 			test('a = ["a", "b"]\na[0] = "z"\ntest("z", a[0])');
 		});
 	});

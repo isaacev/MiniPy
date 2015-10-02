@@ -39,9 +39,11 @@ exports.enums = {
 	},
 
 	ValueType: {
+		NONE: 'None',
 		BOOLEAN: 'Boolean',
 		NUMBER: 'Number',
 		STRING: 'String',
 		ARRAY: 'Array',
+		FUNCTION: 'Function',
 	},
 };

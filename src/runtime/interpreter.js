@@ -1,12 +1,6 @@
 // [MiniPy] /src/runtime/Interpreter.js
 
 exports.Interpreter = (function() {
-	// TODO:
-	// + For loop
-	// + Range function
-	// + Change print statement to function (Python 3.0)
-	// + Operation type checking
-
 	var TokenType = require('../enums').enums.TokenType;
 	var ErrorType = require('../enums').enums.ErrorType;
 	var ValueType = require('../enums').enums.ValueType;
@@ -29,20 +23,57 @@ exports.Interpreter = (function() {
 	}
 
 	function Interpreter(ast, globals) {
-		var scope = new Scope();
+		var scope = new Scope(null);
 
 		// load passed global variables into scope
-		globals = globals || {};
-		for (var key in globals) {
-			if (globals.hasOwnProperty(key)) {
-				scope.set(key, globals[key]);
-			}
-		}
+		Object.keys(globals || {}).forEach(function(globalIdentifier) {
+			scope.set(globalIdentifier, new Type.Function(false, function(argNodes, complexArgs, simpleArgs) {
+				var builtin = globals[globalIdentifier];
+
+				if (typeof builtin === 'function') {
+					// no argument validation given, just pass the arguments in
+					return builtin.apply({}, simpleArgs);
+				} else {
+					// method configuration specified
+
+					// validate passed arguments in accordinance with the
+					// built-in method's specification
+					if (typeof builtin.args === 'object') {
+						argLoop: for (var i = 0, l = argNodes.length; i < l; i++) {
+							if (builtin.args[i] instanceof Array) {
+								// multiple possible types stored in an array, check each successive type
+								// against argument at index `i`. if the argument matches, break the loop
+								// and go on to check the next argument. if the argument's type fails all
+								// checks, throw an error and point to the offending argument node
+								typeLoop: for (var j = 0; j < builtin.args[i].length; j++) {
+									if (complexArgs[i].type.toLowerCase() === builtin.args[i][j].toLowerCase()) {
+										// type successfully matched
+										continue argLoop;
+									}
+								}
+
+								// argument at index `i` wasn't valid so throw an error
+									var typeList = builtin.args[i].map(function(type) {
+									return type[0].toUpperCase() + type.substring(1);
+								}).join(' or ');
+
+								throw argNodes[i].error({
+									type: ErrorType.TYPE_VIOLATION,
+									message: 'Function "' + globalIdentifier + '" was expecting an argument with type ' + typeList,
+								})
+							} else if (typeof builtin.args[i] === 'string' && builtin.args[i] !== 'any') {
+								// single possible type
+							}
+						}
+					}
+
+					return builtin.fn.apply({}, simpleArgs);
+				}
+			}));
+		});
 
 		var validEventNames = [
-			'assign',
 			'scope',
-			'print',
 			'exit',
 		];
 
@@ -60,6 +91,17 @@ exports.Interpreter = (function() {
 			}
 		}
 
+		function registerHook(eventName, hook) {
+			// attach event hooks to hook table
+			if (validEventNames.indexOf(eventName) >= 0 && typeof hook === 'function') {
+				if (hooks[eventName] instanceof Array) {
+					hooks[eventName].push(hook);
+				} else {
+					hooks[eventName] = [hook];
+				}
+			}
+		}
+
 		var loadOnce = once(function() {
 			event('load');
 		});
@@ -73,16 +115,11 @@ exports.Interpreter = (function() {
 			if (validEventNames.indexOf(eventName) >= 0 &&
 				hooks[eventName] instanceof Array) {
 
-				if (hooks[eventName].length > 0 && eventName === 'assign') {
-					console.warn('MiniPy "assign" event is deprecated. Use "scope" event instead');
-				}
-
 				hooks[eventName].forEach(function(hook) {
 					if (!(payload instanceof Array)) {
 						payload = [payload];
 					}
 
-					// hook.apply({}, payload);
 					waitingHooks.push(function(expression) {
 						hook.apply(expression || {}, payload);
 					});
@@ -90,99 +127,202 @@ exports.Interpreter = (function() {
 			}
 		}
 
+		function simplifyValue(value) {
+			switch (value.type) {
+				case 'Boolean':
+				case 'Number':
+				case 'String':
+					return value.value;
+				case 'Array':
+					var simplification = [];
+
+					for (var i = 0, l = value.value.length; i < l; i++) {
+						simplification[i] = simplifyValue(value.value[i]);
+					}
+
+					return simplification;
+				case 'Function':
+					throw {
+						type: ErrorType.TYPE_VIOLATION,
+						message: 'Functions cannot be passed or manipulated',
+					};
+				default:
+					return undefined;
+			}
+		}
+
 		/*
-		 * Isaac Evavold 9/10/15 9:00pm
+		 * Author:      Isaac Evavold
+		 * Created:     9/10/15 9:00pm
+		 * Edited:      10/2/15 1:30am
 		 *
 		 * The following array and functions implement a system for pausing/resuming
 		 * the interpreter. This enables the user to execute the program
 		 * line-by-line manually for debugging/educational purposes.
 		 *
 		 * NOTES:
-		 * Each time the interpreter is resumed it executes 1 non-empty line before
-		 * pausing again. In the case of lines which don't affect flow-control
-		 * (assignment, function calls, arithmetic, etc.) this usually consumes
-		 * the entire statement. In the case of more complex statements (If, While,
-		 * For, etc.) the interpreter executes the statement declaration line once
-		 * and next begins executing the consequent block of statements as
-		 * appropriate.
+		 * These notes detail version 2.0 of the interpretation system. As a general
+		 * overview, at any time the `loadedBlocks` array behaves as a stack holding arrays
+		 * of statements corresponding to different levels of indentation in the program. As
+		 * interpretation moves through the program, blocks of statements are pushed or popped
+		 * as required. At each turn of execution (represetned by the `nextEspression` function),
+		 * one statement is popped from the topmost block of the stack and run by the `exec` function.
+		 * Said statement may do math or logic, may execute interal statements, may control the
+		 * program flow or many other things detailed in `exec`.
 		 *
 		 * IMPLEMENTATION:
-		 * - resumeStack: [Function]
-		 *      An array of functions waiting to be executed. The last function in
-		 *      the stack will be executed next. If that function calls `pause`
-		 *      during its execution then the a new continuation function will be
-		 *      pushed onto the stack to be executed next. Once the function returns
-		 *      the next function lower is popped and executed.
+		 * - ExecutionBlock: (array of statements, )
+		 *      Constructs an object representing a series of statements of the same scope
+		 *      and indentation level. `ExecutionBlock`s make it easier to attach events
+		 *      for when the execution of a block is concluded, when a block of statements
+		 *      is returned and what line in the program is being returned to.
 		 *
-		 *      Put another way, when interpreting Python code the depth of the
-		 *      `resumeStack` is approximate to the level of indentation + 1 at any
-		 *      particular point with a different function representing the
-		 *      continuation at each indentation.
+		 * - loadBlock: (ExecutionBlock object)
+		 *      Given an `ExecutionBlock`, append that object to the top of the
+		 *      `loadedBlocks` stack to wait for execution.
 		 *
-		 * - pause: (Function) -> void
-		 *      Functions passed to `pause` are pushed onto the `resumeStack` and
-		 *      represent continuations of the program execution at a certain point.
-		 *      Generally `pause` is called when a statement is performing
-		 *      flow-control (If, While, For, etc.) and is executing a sub-block
-		 *      of statements. It prevents `execBlock` from executing the next node
-		 *      before the current flow-controlling node has finished executing.
+		 * - nextExpression: ()
+		 *      Pop the top block off the `loadedBlocks` stack and execute its next statement.
+		 *      Once execution is complete `nextExpression` will output detail about which
+		 *      corresponding line of the source code was run so that listening programs can
+		 *      inform the user.
 		 *
-		 * - resume: () -> Function
-		 *      Returns the top function in the `resumeStack` for execution. This
-		 *      function should only be called by the Intepreter librarie's `next`
-		 *      or `execute` methods which are responsible for triggering the
-		 *      continuation of program interpreteration.
+		 * - exec: (AST Node object, callback)
+		 *      Processes a single AST node and passes the evaluated result back through
+		 *      the callback argument. Some nodes could be executed syncronously (Literals,
+		 *      built-in functions like `print` and `len`, etc.) but the possibilty of
+		 *      asyncronous element execution (Function calls, Loops, If statements, etc.)
+		 *      makes it necessary to maintain a similar interface for both cases. The
+		 *      function returns nothing.
 		 *
-		 *      Generally:
-		 *      The Interpreter only calls `pause` and the user only calls `resume`.
+		 * - comprehendSeries: (accumulated elements, remaining elements, callback)
+		 *      Called when a series of elements (function call arguments, element of
+		 *      an array, etc. need to be evaluated in series and any of them may be
+		 *      asyncronous. The first argument, "accumulated elements" should usually
+		 *      be passed as an empty array. It's purpose is largely for internal
+		 *      recusion since `comprehendSeries` keeps calling itself as it digests
+		 *      its array of nodes.
 		 *
-		 * - exec: (AST Node object) -> value or void
-		 *      Either executes a single line and returns the computed value of the
-		 *      line (in the case of Literals, Arithmetic, Identifiers, etc.) or
-		 *      void of the line is a statement (Print, Assignment, etc.) or void of
-		 *      the line performs flow-control (If, While, For, etc.). The execution
-		 *      of any line may involve calling `exec` on smaller parts of the line
-		 *      though typically these smaller parts always directly return a value.
-		 *
-		 *      Flow-control statements call `pause` on their consequent statements
-		 *      inside `exec`.
-		 *
-		 * - execBlock: ([AST Node object], Function?) -> Line details
-		 *      The principle of `execBlock` is stolen from my limited understanding
-		 *      of Haskell's method of pattern matching to lazily traverse lists.
-		 *      `execBlock` is passed an array of AST Node objects and executes the
-		 *      first node while passing the rest of the array to itself via the
-		 *      `pause` function. When execution resumes `execBlock` will receive
-		 *      the new list sans the previously executed node and continue
-		 *      execution on the array of nodes.
-		 *
+		 * ONGOING MESSINESS:
+		 * Currently, the If/Elif/Else and Function statement implementations inject
+		 * statement stubs into the execution stack as a workaround for getting program
+		 * execution flow to pause at the right times. Some of these injected objects
+		 * have to be tagged `execute = false` to prevent execution of the statement
+		 * as if it was real. It seems to work but I would like a more natural solution
+		 * to this problem of specifying granular flow-control.
 		 */
-		var resumeStack = [];
 
-		function pause(fn) {
-			resumeStack.push(fn);
+		function ExecutionBlock(statements, events, returnTo) {
+			events = events || {};
+
+			this.statements = statements;
+			this.done = events.done || null;
+			this.return = events.return || null;
+			this.returnTo = returnTo || null;
 		}
 
-		function resume() {
-			return resumeStack.pop();
+		ExecutionBlock.prototype.slice = function() {
+			return new ExecutionBlock(this.statements.slice(1), {
+				done: this.done,
+				return: this.return,
+			}, this.returnTo);
+		};
+
+		var loadedBlocks = [];
+
+		function loadBlock(block) {
+			loadedBlocks.push(block);
 		}
 
-		function exec(node) {
+		function nextExpression() {
+			var poppedBlock = loadedBlocks.pop();
+
+			if (poppedBlock === undefined) {
+				exitOnce();
+
+				// call hooks and pass line details
+				clearWaitingHooks();
+
+				return null;
+			} else {
+				if (poppedBlock.statements.length > 0) {
+					var node = poppedBlock.statements[0];
+					loadedBlocks.push(poppedBlock.slice());
+
+					exec(node, function(result) {
+						if (result) {
+							// do nothing?
+						}
+					});
+
+					var expressionLine = {
+						type: node.type,
+						range: node.range,
+					};
+
+					// call hooks and pass line details
+					clearWaitingHooks(expressionLine);
+
+					return expressionLine;
+				} else {
+					// have exhausted all statements in top block
+					if (typeof poppedBlock.done === 'function') {
+						var doneOuput = poppedBlock.done();
+
+						// TODO: more specific check to make sure object has type/range fields
+						if (doneOuput !== undefined) {
+							return doneOuput;
+						}
+					}
+
+					return nextExpression();
+				}
+			}
+		}
+
+		function comprehendSeries(accumulated, remaining, done) {
+			if (remaining.length === 0) {
+				done(new Type.Array(accumulated));
+			} else {
+				exec(remaining[0], function(element) {
+					// disallow the passing of functions as call arguments
+					// or storing functions in arrays
+					if (element.type === ValueType.FUNCTION) {
+						throw remaining[0].error({
+							type: ErrorType.TYPE_VIOLATION,
+							message: 'Functions cannot be passed as arguments or stored in arrays',
+						});
+					}
+
+					accumulated.push(element);
+					comprehendSeries(accumulated, remaining.slice(1), done);
+				});
+			}
+		}
+
+		function exec(node, done) {
+			if (node.execute === false) {
+				done();
+				return;
+			}
+
 			switch (node.type) {
 				case 'Literal':
 					switch (node.subtype) {
 						case TokenType.BOOLEAN:
-							return new Type.Boolean(node.value);
+							done(new Type.Boolean(node.value));
+							break;
 						case TokenType.NUMBER:
-							return new Type.Number(node.value);
+							done(new Type.Number(node.value));
+							break;
 						case TokenType.STRING:
-							return new Type.String(node.value);
+							done(new Type.String(node.value));
+							break;
 						case ValueType.ARRAY:
-							var executedElements = node.elements.map(function(element) {
-								return exec(element);
-							});
-
-							return new Type.Array(executedElements);
+							// execute each element of the array, pass executed array
+							// to callback once all elements have been comprehended
+							comprehendSeries([], node.elements, done);
+							break;
 						default:
 							throw node.error({
 								type: ErrorType.UNEXPECTED_TOKEN,
@@ -191,309 +331,355 @@ exports.Interpreter = (function() {
 					}
 
 					break;
+
 				case 'Identifier':
-					return scope.get(node);
+					done(scope.get(node));
+					break;
+
 				case 'AssignmentExpression':
 					var assignee = node.left;
 
-					if (assignee.type === 'Subscript') {
-						// value (array or string) on the left-hande side
-						// of the assignment
-						var root = exec(assignee.root);
-						var indexToChange = exec(assignee.subscript).value;
-
-						if (root instanceof Type.Array) {
-							if (indexToChange >= root.value.length || -indexToChange > root.value.length) {
-								throw assignee.subscript.error({
-									type: ErrorType.OUT_OF_BOUNDS,
-									message: 'Index ' + indexToChange + ' is out of bounds of array with length ' + root.value.length,
-								});
-							} else if (indexToChange < 0) {
-								// negative index (index telative to end of array)
-								root.value[root.value.length + indexToChange] = exec(node.right);
-							} else {
-								// positive index (index relative to start of array)
-								root.value[indexToChange] = exec(node.right);
-							}
-
-							// apply changes to scope
-							scope.set(assignee.root, root);
-
-							// DEPRECATED: use `scope` events instead
-							event('assign', [assignee.value, root]);
+					if (assignee.type === 'Identifier') {
+						exec(node.right, function(rightValue) {
+							// normal assignment to identifier
+							scope.set(assignee, rightValue);
 
 							// call `scope` event
 							event('scope', [scope.toJSON()]);
-						} else if (root instanceof Type.String) {
-							// strings are static, subscript notation cannot be used to modify them
-							throw assignee.error({
-								type: ErrorType.TYPE_VIOLATION,
-								message: 'String does not support item assignment',
-							});
-						} else {
-							// any other type values, general error message
-							throw assignee.error({
-								type: ErrorType.TYPE_VIOLATION,
-								message: 'Can only use subscript assignment on Arrays',
-							});
-						}
-					} else if (assignee.type === 'Identifier') {
-						// normal assignment to identifier
-						var value = exec(node.right);
-						scope.set(assignee, value);
 
-						// DEPRECATED: use `scope` events instead
-						event('assign', [assignee.value, value]);
+							done();
+						});
+					} else if (assignee.type === 'Subscript') {
+						exec(assignee.root, function(rootValue) {
+							exec(assignee.subscript, function(subscriptValue) {
+								if (subscriptValue instanceof Type.Number) {
+									if (rootValue instanceof Type.Array) {
+										if (subscriptValue.value >= rootValue.value.length || -subscriptValue > rootValue.value.length) {
+											throw assignee.subscript.error({
+												type: ErrorType.OUT_OF_BOUNDS,
+												message: 'Index ' + indexToChange.value
+													+ ' is out of bounds of array with length ' + root.value.length,
+											});
+										} else {
+											// negative index (index telative to end of array)
+											exec(node.right, function(rightValue) {
+												if (subscriptValue.value < 0) {
+													rootValue.value[rootValue.value.length + subscriptValue.value] = rightValue;
+												} else {
+													rootValue.value[subscriptValue.value] = rightValue;
+												}
 
-						// call `scope` event
-						event('scope', [scope.toJSON()]);
+												// apply changes to scope
+												scope.set(assignee.root, rootValue);
+
+												// call applicable event
+												event('scope', [scope.toJSON()]);
+											});
+										}
+									} else {
+										throw assignee.root.error({
+											type: ErrorType.TYPE_VIOLATION,
+											message: 'Subscript assignment notation can only be used on arrays',
+										});
+									}
+								} else {
+									assignee.subscript.error({
+										type: ErrorType.TYPE_VIOLATION,
+										message: 'Subscript value must be a number, instead was ' + subscriptValue.type,
+									});
+								}
+							});
+						});
 					} else {
 						throw assignee.error({
-							type: UNKNOWN_OPERATION,
+							type: ErrorType.UNKNOWN_OPERATION,
 							message: 'Illegal left-hande side of assignment',
 						});
 					}
 
 					break;
+
 				case 'UnaryExpression':
 					var operatorSymbol = node.operator.value;
-					var rightValue = exec(node.right);
 
-					try {
-						var isUnary = true;
-						var computedValue = rightValue.operation(isUnary, operatorSymbol);
-					} catch (details) {
-						// catch errors created by the operation and based on the error type,
-						// assign the errors to the offending expressions or tokens
-						switch (details.type) {
-							case ErrorType.TYPE_VIOLATION:
-								// errors caused by the operand
-								throw node.right.error(details);
-							case ErrorType.UNKNOWN_OPERATION:
-								// unknown operation for `rightValue`
-								throw node.operator.error(details);
-							default:
-								if (typeof details.type === 'number' && typeof details.message === 'string') {
-									// thrown object is { type: Number, message: String } and can be converted
-									throw node.error(details);
-								} else {
-									throw details;
-								}
+					exec(node.right, function(rightValue) {
+						try {
+							var isUnary = true;
+							var computedValue = rightValue.operation(isUnary, operatorSymbol);
+						} catch (details) {
+							// catch errors created by the operation and based on the error type,
+							// assign the errors to the offending expressions or tokens
+							switch (details.type) {
+								case ErrorType.TYPE_VIOLATION:
+									// errors caused by the operand
+									throw node.right.error(details);
+								case ErrorType.UNKNOWN_OPERATION:
+									// unknown operation for `rightValue`
+									throw node.operator.error(details);
+								default:
+									if (typeof details.type === 'number' && typeof details.message === 'string') {
+										// thrown object is { type: Number, message: String } and can be converted
+										throw node.error(details);
+									} else {
+										throw details;
+									}
+							}
 						}
-					}
 
-					return computedValue;
+						done(computedValue);
+					});
+
+					break;
+
 				case 'BinaryExpression':
 					var operatorSymbol = node.operator.value;
-					var leftValue = exec(node.left);
-					var rightValue = exec(node.right);
 
-					try {
-						var isUnary = false;
-						var computedValue = leftValue.operation(isUnary, operatorSymbol, rightValue);
-					} catch (details) {
-						// catch errors created by the operation and based on the error type,
-						// assign the errors to the offending expressions or tokens
-						switch (details.type) {
-							case ErrorType.TYPE_VIOLATION:
-							case ErrorType.DIVIDE_BY_ZERO:
-								// errors caused by the right-hande operand
-								throw node.right.error(details);
-							case ErrorType.UNKNOWN_OPERATION:
-								// unknown operation for `leftValue`
-								throw node.operator.error(details);
-							default:
-								throw node.error(details);
-						}
-					}
-
-					return computedValue;
-				case 'Subscript':
-					var operatorSymbol = node.operator.value;
-					var rootValue = exec(node.root);
-					var subscriptValue = exec(node.subscript);
-
-					try {
-						var isUnary = false;
-						var computedValue = rootValue.operation(isUnary, operatorSymbol, subscriptValue);
-					} catch (details) {
-						// catch errors created by the operation and based on the error type,
-						// assign the errors to the offending expressions or tokens
-						switch (details.type) {
-							case ErrorType.TYPE_VIOLATION:
-							case ErrorType.OUT_OF_BOUNDS:
-								// errors caused by the subscript index
-								throw node.subscript.error(details);
-							default:
-								throw node.error(details);
-						}
-					}
-
-					return computedValue;
-				case 'CallExpression':
-					var calleeIdentifier = node.callee.value;
-
-					if (calleeIdentifier === 'print') {
-						var printArguments = [];
-
-						for (var i = 0, l = node.arguments.length; i < l; i++) {
-							var argument = exec(node.arguments[i]);
-
-							if (['Boolean', 'Number', 'String'].indexOf(argument.type) >= 0) {
-								printArguments.push(argument.get());
-							} else {
-								throw node.arguments[i].error({
-									type: ErrorType.TYPE_VIOLATION,
-									message: 'Only concrete values (ex: booleans, numbers, strings) can be printed',
-								});
-							}
-						}
-
-						event('print', printArguments);
-					} else {
-						// get identifier's value from scope
-						var fn = scope.get(node.callee);
-
-						if (typeof fn === 'function') {
-							// call global function
-							var executedArguments = node.arguments.map(exec);
-							return fn.apply({}, executedArguments);
-						} else {
-							// callee is not a function
-							node.callee.error({
-								type: ErrorType.TYPE_VIOLATION,
-								message: '"' + calleeIdentifier + '" is not a function',
-							});
-						}
-					}
-
-					break;
-				case 'IfStatement':
-					var condition = exec(node.condition);
-
-					if (condition.value === true) {
-						// IF block
-						pause(function() {
-							return execBlock(node.ifBlock.statements);
-						});
-					} else {
-						// check ELIF or ELSE clauses
-						var cases = [];
-
-						if (node.elifBlocks !== null) {
-							cases = node.elifBlocks;
-						}
-
-						if (node.elseBlock !== null) {
-							cases.push(node.elseBlock);
-						}
-
-						var nextCase = function(cases) {
-							if (cases.length > 0) {
-								var thisCase = cases[0];
-
-								if (thisCase.type === 'ElifStatement') {
-									var elifCondition = exec(thisCase.condition);
-
-									if (elifCondition.value === true) {
-										// condition matches, execute this "elif" block
-										pause(function() {
-											return execBlock(thisCase.block.statements);
-										});
-									} else {
-										// condition did not match, try next block
-										pause(function() {
-											return nextCase(cases.slice(1));
-										});
-									}
-
-									return {
-										type: 'ElifStatement',
-										range: thisCase.range,
-									};
-								} else if (thisCase.type === 'ElseStatement') {
-									// execution of "else" block
-									pause(function() {
-										return execBlock(thisCase.block.statements);
-									});
-
-									return {
-										type: 'ElseStatement',
-										range: thisCase.range,
-									};
+					exec(node.left, function(leftValue) {
+						exec(node.right, function(rightValue) {
+							try {
+								var isUnary = false;
+								var computedValue = leftValue.operation(isUnary, operatorSymbol, rightValue);
+							} catch (details) {
+								// catch errors created by the operation and based on the error type,
+								// assign the errors to the offending expressions or tokens
+								switch (details.type) {
+									case ErrorType.TYPE_VIOLATION:
+									case ErrorType.DIVIDE_BY_ZERO:
+										// errors caused by the right-hande operand
+										throw node.right.error(details);
+									case ErrorType.UNKNOWN_OPERATION:
+										// unknown operation for `leftValue`
+										throw node.operator.error(details);
+									default:
+										throw node.error(details);
 								}
 							}
-						};
 
-						if (cases.length > 0) {
-							pause(function() {
-								return nextCase(cases);
-							});
-						}
-					}
+							done(computedValue);
+						});
+					});
 
 					break;
-				case 'WhileStatement':
-					var condition = exec(node.condition);
-					var loop = function() {
-						pause(function() {
-							var newCondition = exec(node.condition);
 
-							if (newCondition.value === true) {
-								pause(function() {
-									return execBlock(node.block.statements, loop);
-								});
+				case 'Subscript':
+					var operatorSymbol = '[';
+
+					exec(node.root, function(rootValue) {
+						exec(node.subscript, function(subscriptValue) {
+							try {
+								var isUnary = false;
+								var computedValue = rootValue.operation(isUnary, operatorSymbol, subscriptValue);
+							} catch (details) {
+								// catch errors created by the operation and based on the error type,
+								// assign the errors to the offending expressions or tokens
+								switch (details.type) {
+									case ErrorType.TYPE_VIOLATION:
+									case ErrorType.OUT_OF_BOUNDS:
+										// errors caused by the subscript index
+										throw node.subscript.error(details);
+									default:
+										throw node.error(details);
+								}
 							}
 
-							return {
-								type: 'WhileStatement',
-								range: node.range,
-							};
+							done(computedValue);
 						});
-					};
+					});
 
-					if (condition.value === true) {
-						pause(function() {
-							return execBlock(node.block.statements, loop);
+					break;
+
+				case 'IfStatement':
+					exec(node.condition, function(condition) {
+						if (condition.value === true) {
+							loadBlock(new ExecutionBlock(node.ifBlock.statements.slice(0)));
+						} else {
+							var cases = (node.elifBlocks || []);
+
+							if (node.elseBlock !== null) {
+								cases.push(node.elseBlock);
+							}
+
+							if (cases.length > 0) {
+								loadBlock(new ExecutionBlock(cases));
+							}
+						}
+					});
+
+					break;
+
+				case 'ElifStatement':
+					exec(node.condition, function(condition) {
+						if (condition.value === true) {
+							loadBlock(new ExecutionBlock(node.block.statements.slice(0), {
+								done: function() {
+									// since this condition matched, prevent execution of any
+									// other `elif` or `else` blocks
+									loadedBlocks.pop();
+								},
+							}));
+						}
+					});
+
+					break;
+
+				case 'ElseStatement':
+					loadBlock(new ExecutionBlock(node.block.statements.slice(0)));
+					break;
+
+				case 'WhileStatement':
+					function whileLoop() {
+						exec(node.condition, function(condition) {
+							if (condition.value === true) {
+								loadBlock(new ExecutionBlock(node.block.statements.slice(0), {
+									done: whileLoop,
+								}))
+							}
 						});
+
+						// point back to line with while-condition
+						return {
+							type: node.type,
+							range: node.range,
+						};
+					}
+
+					whileLoop();
+
+					break;
+
+				case 'FunctionStatement':
+					scope.set(node.name, new Type.Function(true, function(callArgValues, callingNode, done) {
+						// new level of scope
+						scope = new Scope(scope);
+
+						// create function argument variables
+						for (var i = 0, l = Math.min(node.args.length, callArgValues.value.length); i < l; i++) {
+							var forceLocal = true;
+							scope.set(node.args[i], callArgValues.value[i], forceLocal);
+						}
+
+						if (node.block.statements[0].type !== 'FunctionStatement' && node.block.statements[0].execute !== false) {
+							node.block.statements.unshift({
+								type: 'FunctionStatement',
+								execute: false,
+								range: node.range,
+							});
+						}
+
+						var returnTo = {
+							type: 'CallExpression',
+							execute: false,
+							range: callingNode.range,
+						};
+
+						var block = new ExecutionBlock(node.block.statements.slice(0), {
+							done: function() {
+								// return to old scope
+								scope = scope.parent;
+
+								// no returned expression, pass nothing
+								done(undefined);
+							},
+
+							return: function(output) {
+								// return to old scope
+								scope = scope.parent;
+
+								// pass any returned expression
+								done(output || undefined);
+							},
+						}, returnTo);
+
+						loadBlock(block);
+
+						return {
+							type: node.type,
+							range: node.range,
+						};
+					}));
+
+					break;
+
+				case 'ReturnStatement':
+					if (node.arg !== null) {
+						exec(node.arg, function(returnValue) {
+							while (loadedBlocks.length > 0) {
+								var popped = loadedBlocks.pop();
+
+								if (typeof popped.return === 'function') {
+									popped.return(returnValue);
+
+									done();
+
+									if (popped.returnTo !== null) {
+										loadedBlocks[loadedBlocks.length - 1].statements.unshift(popped.returnTo);
+									}
+
+									return;
+								}
+							}
+
+							throw new Error('Can only return from inside a function');
+						});
+					} else {
+						while (loadedBlocks.length > 0) {
+							var popped = loadedBlocks.pop();
+
+							if (typeof popped.return === 'function') {
+								popped.return(null);
+
+								done();
+								return;
+							}
+						}
+
+						throw new Error('Can only return from inside a function');
 					}
 
 					break;
-			}
-		}
 
-		function execBlock(nodes, done) {
-			if (nodes.length > 0) {
-				var node = nodes[0];
-				var detail = {
-					type: node.type,
-					range: node.range,
-				};
+				case 'CallExpression':
 
-				if (nodes.length > 1) {
-					pause(function() {
-						return execBlock(nodes.slice(1), done);
+					var functionValue = scope.get(node.callee);
+
+					comprehendSeries([], node.args, function(callArgValues) {
+						if (functionValue.blocking === true) {
+							// functions defined in-program and thus debugging execution flow
+							// will pass to the function declaration to walk through
+							// the function's logic line-by-line
+							var declarationLine = functionValue.exec(callArgValues, node, function(returnValue) {
+								done(returnValue);
+							});
+						} else {
+							// function is inline, probably build-in like `len()` or `print()` and should
+							// not effect the line-by-line debugger flow
+							var possibleReturnValue = functionValue.exec(node.args, callArgValues.value, simplifyValue(callArgValues));
+
+							// convert the return value (if it exists) to an internal represented value object
+							// TODO: currently arrays are not supported
+							var returnValue;
+							switch (typeof possibleReturnValue) {
+								case 'boolean':
+									returnValue = new Type.Boolean(possibleReturnValue);
+									break;
+								case 'number':
+									returnValue = new Type.Number(possibleReturnValue);
+									break;
+								case 'string':
+									returnValue = new Type.String(possibleReturnValue);
+									break;
+								default:
+									returnValue = new Type.None();
+							}
+
+							done(returnValue);
+						}
 					});
-				}
 
-				exec(node);
+					break;
 
-				if (nodes.length === 1 && typeof done === 'function') {
-					done();
-				}
-
-				return detail;
-			}
-		}
-
-		function registerHook(eventName, hook) {
-			// attach event hooks to hook table
-			if (validEventNames.indexOf(eventName) >= 0 && typeof hook === 'function') {
-				if (hooks[eventName] instanceof Array) {
-					hooks[eventName].push(hook);
-				} else {
-					hooks[eventName] = [hook];
-				}
+				default:
+					throw new Error('Unknown statement with type "' + node.type + '"');
 			}
 		}
 
@@ -509,25 +695,16 @@ exports.Interpreter = (function() {
 				}
 
 				loadOnce();
-				pause(function() {
-					return execBlock(ast.body);
-				});
+
+				loadBlock(new ExecutionBlock(ast.body, {
+					done: function() {
+						// TODO: fire `exit` event
+					},
+				}));
 			},
 
 			next: function() {
-				var fn = resume();
-
-				if (typeof fn === 'function') {
-					var expression = fn.apply({}, []);
-
-					clearWaitingHooks(expression);
-
-					return expression;
-				} else {
-					exitOnce();
-					clearWaitingHooks(null);
-					return null;
-				}
+				return nextExpression();
 			},
 
 			on: registerHook,
