@@ -151,6 +151,30 @@ exports.Parser = (function() {
 						return this.range.error(details);
 					};
 				},
+
+				Function: function(defKeyword, name, args, block) {
+					this.type = 'FunctionStatement';
+					this.name = name;
+					this.args = args;
+					this.block = block;
+
+					this.range = defKeyword.range.union(block.range);
+
+					this.error = function(details) {
+						return this.range.error(details);
+					};
+				},
+
+				Return: function(returnKeyword, arg) {
+					this.type = 'ReturnStatement';
+					this.arg = arg;
+
+					this.range = (arg === null ? returnKeyword.range : returnKeyword.range.union(arg.range));
+
+					this.error = function(details) {
+						return this.range.error(details);
+					};
+				},
 			},
 
 			parselets: {
@@ -379,6 +403,74 @@ exports.Parser = (function() {
 						return precedence;
 					};
 				},
+
+				Function: function() {
+					var precedence = 100;
+
+					this.parse = function(parser, defKeywordToken) {
+						var nameToken = self.next(TokenType.IDENTIFIER);
+
+						var args = [];
+
+						// consume left paren
+						self.next(TokenType.PUNCTUATOR, '(');
+
+						while (true) {
+							if (self.peek(TokenType.PUNCTUATOR, ')')) {
+								// break loop when right paren found
+								var rightParenToken = self.next(TokenType.PUNCTUATOR, ')');
+								break;
+							} else {
+								args.push(self.next(TokenType.IDENTIFIER));
+
+								if (self.peek(TokenType.PUNCTUATOR, ',')) {
+									// consume comma
+									self.next(TokenType.PUNCTUATOR, ',');
+								} else if (self.peek(TokenType.PUNCTUATOR, ')') === null) {
+									// next token is not an end paren meaning the next
+									// token is not syntactically legal
+									var badToken = self.next();
+
+									throw badToken.error({
+										type: ErrorType.UNEXPECTED_TOKEN,
+										message: 'Expecting a comma or right parenthesis, instead found ' +
+											(badToken.type === TokenType.PUNCTUATOR ? badToken.value : badToken.type),
+									});
+								}
+							}
+						}
+
+						self.next(TokenType.PUNCTUATOR, ':');
+						self.next(TokenType.NEWLINE);
+
+						var block = self.parseBlock();
+
+						return new self.nodes.expressions.Function(defKeywordToken, nameToken, args, block);
+					};
+
+					this.getPrecedence = function() {
+						return precedence;
+					};
+				},
+
+				Return: function() {
+					var precedence = 100;
+
+					this.parse = function(parser, returnKeywordToken) {
+						if (self.peek(TokenType.NEWLINE) || self.peek(TokenType.EOF)) {
+							// nothing being returned by this statement
+							var arg = null;
+						} else {
+							var arg = parser.parseExpression();
+						}
+
+						return new self.nodes.expressions.Return(returnKeywordToken, arg);
+					};
+
+					this.getPrecedence = function() {
+						return precedence;
+					};
+				},
 			}
 		};
 
@@ -443,6 +535,8 @@ exports.Parser = (function() {
 
 		prefix('if', new self.nodes.parselets.If());
 		prefix('while', new self.nodes.parselets.While());
+		prefix('def', new self.nodes.parselets.Function());
+		prefix('return', new self.nodes.parselets.Return());
 	}
 
 	// given optional matching requirements, return next token
