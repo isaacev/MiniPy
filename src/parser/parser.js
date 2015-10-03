@@ -339,7 +339,7 @@ exports.Parser = (function() {
 							var elifKeywordToken = self.next(TokenType.KEYWORD, 'elif');
 							var elifCondition = self.parseExpression();
 
-							self.next(TokenType.PUNCTUATOR, ':');
+							var colon = self.next(TokenType.PUNCTUATOR, ':');
 							self.next(TokenType.NEWLINE);
 
 							var elifBlock = self.parseBlock();
@@ -348,7 +348,7 @@ exports.Parser = (function() {
 								type: 'ElifStatement',
 								condition: elifCondition,
 								block: elifBlock,
-								range: elifBlock.range,
+								range: elifKeywordToken.range.union(colon.range),
 							});
 						}
 
@@ -370,10 +370,8 @@ exports.Parser = (function() {
 							elseBlock = {
 								type: 'ElseStatement',
 								block: block,
-								range: block.range,
+								range: elseKeywordToken.range,
 							};
-
-							// TODO: bundle elseKeywordToken line/column data with IfStatement
 						}
 
 						return new self.nodes.expressions.If(ifKeywordToken, condition, ifBlock, elifStatements, elseBlock);
