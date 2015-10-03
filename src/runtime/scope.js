@@ -137,7 +137,7 @@ exports.Scope = (function() {
 		if (this.parent === null) {
 			for (var name in this.globals) {
 				if (this.globals.hasOwnProperty(name)) {
-					if (this.globals[name].type === ValueType.FUNCTION && this.globals[name].blocking === false) {
+					if (this.globals[name].type === ValueType.FUNCTION) {
 						// skip built in functions
 						continue;
 					}
@@ -148,7 +148,7 @@ exports.Scope = (function() {
 		} else {
 			for (var name in this.locals) {
 				if (this.locals.hasOwnProperty(name)) {
-					if (this.locals[name].type === ValueType.FUNCTION && this.locals[name].blocking === false) {
+					if (this.locals[name].type === ValueType.FUNCTION) {
 						// skip built in functions
 						continue;
 					}
