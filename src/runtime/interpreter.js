@@ -27,7 +27,7 @@ exports.Interpreter = (function() {
 
 		// load passed global variables into scope
 		Object.keys(globals || {}).forEach(function(globalIdentifier) {
-			scope.set(globalIdentifier, new Type.Function(false, function(argNodes, complexArgs, simpleArgs) {
+			scope.set(globalIdentifier, new Type.Function(false, [], function(calleeNode, argsNodes, complexArgs, simpleArgs) {
 				var builtin = globals[globalIdentifier];
 
 				if (typeof builtin === 'function') {
@@ -301,6 +301,11 @@ exports.Interpreter = (function() {
 							type: ErrorType.TYPE_VIOLATION,
 							message: 'Functions cannot be passed as arguments or stored in arrays',
 						});
+					} else if (element.type === ValueType.NONE) {
+						throw remaining[0].error({
+							type: ErrorType.TYPE_VIOLATION,
+							message: 'Cannot collect a value from a function which has returned nothing',
+						});
 					}
 
 					accumulated.push(element);
@@ -311,6 +316,10 @@ exports.Interpreter = (function() {
 
 		function exec(node, done) {
 			if (node.execute === false) {
+				if (typeof node.script === 'function') {
+					node.script();
+				}
+
 				done();
 				return;
 			}
@@ -366,8 +375,7 @@ exports.Interpreter = (function() {
 										if (subscriptValue.value >= rootValue.value.length || -subscriptValue > rootValue.value.length) {
 											throw assignee.subscript.error({
 												type: ErrorType.OUT_OF_BOUNDS,
-												message: 'Index ' + indexToChange.value
-													+ ' is out of bounds of array with length ' + root.value.length,
+												message: 'Index ' + indexToChange.value + ' is out of bounds of array with length ' + root.value.length,
 											});
 										} else {
 											// negative index (index telative to end of array)
@@ -557,7 +565,7 @@ exports.Interpreter = (function() {
 					break;
 
 				case 'FunctionStatement':
-					scope.set(node.name, new Type.Function(true, function(callArgValues, callingNode, done) {
+					scope.set(node.name, new Type.Function(true, node.args, function(callArgValues, callingNode, done) {
 						// new level of scope
 						scope = new Scope(scope);
 
@@ -605,16 +613,15 @@ exports.Interpreter = (function() {
 								// return to old scope
 								scope = scope.parent;
 
+								event('scope', scope.toJSON());
+
 								// no returned expression, pass nothing
-								done(undefined);
+								done(new Type.None());
 							},
 
 							return: function(output) {
-								// return to old scope
-								scope = scope.parent;
-
 								// pass any returned expression
-								done(output || undefined);
+								done(output || new Type.None());
 							},
 						}, returnTo);
 
@@ -626,6 +633,8 @@ exports.Interpreter = (function() {
 						};
 					}));
 
+					event('scope', [scope.toJSON()]);
+
 					break;
 
 				case 'ReturnStatement':
@@ -635,14 +644,20 @@ exports.Interpreter = (function() {
 								var popped = loadedBlocks.pop();
 
 								if (typeof popped.return === 'function') {
-									popped.return(returnValue);
-
-									done();
-
 									if (popped.returnTo !== null) {
+										// pop scope
+										scope = scope.parent;
+
+										popped.returnTo.script = function() {
+											// return data once interpreter has returned to the calling expression
+											popped.return(returnValue);
+											event('scope', [scope.toJSON()]);
+										};
+
 										loadedBlocks[loadedBlocks.length - 1].statements.unshift(popped.returnTo);
 									}
 
+									done();
 									return;
 								}
 							}
@@ -675,13 +690,11 @@ exports.Interpreter = (function() {
 							// functions defined in-program and thus debugging execution flow
 							// will pass to the function declaration to walk through
 							// the function's logic line-by-line
-							var declarationLine = functionValue.exec(callArgValues, node, function(returnValue) {
-								done(returnValue);
-							});
+							functionValue.exec(callArgValues, node, done);
 						} else {
 							// function is inline, probably build-in like `len()` or `print()` and should
 							// not effect the line-by-line debugger flow
-							var possibleReturnValue = functionValue.exec(node.args, callArgValues.value, simplifyValue(callArgValues));
+							var possibleReturnValue = functionValue.exec(node.callee, node.args, callArgValues.value, simplifyValue(callArgValues));
 
 							// convert the return value (if it exists) to an internal represented value object
 							// TODO: currently arrays are not supported

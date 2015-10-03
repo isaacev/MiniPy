@@ -307,9 +307,10 @@ exports.Type = (function() {
 		}
 	};
 
-	function FunctionValue(blocking, exec) {
+	function FunctionValue(blocking, args, exec) {
 		// defaults to `false`
 		this.type = 'Function';
+		this.args = args;
 		this.blocking = (blocking === true);
 		this.exec = exec;
 	}

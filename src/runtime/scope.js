@@ -2,6 +2,7 @@
 
 exports.Scope = (function() {
 	var ErrorType = require('../enums').enums.ErrorType;
+	var ValueType = require('../enums').enums.ValueType;
 
 	function simplifyValue(value) {
 		switch (value.type) {
@@ -18,16 +19,19 @@ exports.Scope = (function() {
 
 				return simplification;
 			case 'Function':
-				return 'def (' + value.args.map(function(arg) {
-					return arg.value;
-				}).join(', ') + ')';
+				return {
+					args: value.args.map(function(arg) {
+						return arg.value;
+					}),
+				};
 			default:
 				return undefined;
 		}
 	}
 
-	function Scope(parent) {
+	function Scope(parent, details) {
 		this.parent = parent;
+		this.details = details || null;
 
 		if (this.parent === null) {
 			this.globals = {};
@@ -68,7 +72,7 @@ exports.Scope = (function() {
 			// this scope doesn't own the variable, check with the parent scope
 			// or throw an error if it doesn't exist
 			if (this.parent instanceof Scope) {
-				return this.parent.get(name);
+				return this.parent.get(node);
 			} else {
 				throw node.error({
 					type: ErrorType.UNDEFINED_VARIABLE,
@@ -119,13 +123,38 @@ exports.Scope = (function() {
 			variables: {},
 		};
 
+		if (this.details !== null) {
+			// include extra info about function scopes
+			scope.name = this.details.name;
+			scope.args = this.details.args;
+		}
+
 		if (subscope !== undefined) {
 			scope.subscope = subscope;
 		}
 
-		for (var name in this.local) {
-			if (this.local.hasOwnProperty(name)) {
-				scope.variables[name] = simplifyValue(this.local[name]);
+		// collect variables into JSON scope representation
+		if (this.parent === null) {
+			for (var name in this.globals) {
+				if (this.globals.hasOwnProperty(name)) {
+					if (this.globals[name].type === ValueType.FUNCTION && this.globals[name].blocking === false) {
+						// skip built in functions
+						continue;
+					}
+
+					scope.variables[name] = simplifyValue(this.globals[name]);
+				}
+			}
+		} else {
+			for (var name in this.locals) {
+				if (this.locals.hasOwnProperty(name)) {
+					if (this.locals[name].type === ValueType.FUNCTION && this.locals[name].blocking === false) {
+						// skip built in functions
+						continue;
+					}
+
+					scope.variables[name] = simplifyValue(this.locals[name]);
+				}
 			}
 		}
 
