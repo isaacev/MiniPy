@@ -566,15 +566,8 @@ exports.Interpreter = (function() {
 
 				case 'FunctionStatement':
 					scope.set(node.name, new Type.Function(true, node.args, function(callArgValues, callingNode, done) {
-						// new level of scope
-						scope = new Scope(scope);
-
-						// create function argument variables
-						for (var i = 0, l = Math.min(node.args.length, callArgValues.value.length); i < l; i++) {
-							var forceLocal = true;
-							scope.set(node.args[i], callArgValues.value[i], forceLocal);
-						}
-
+						// add debugger pointer to function declaration so that declaration
+						// line will be highlighted when stepping through the program
 						if (node.block.statements[0].type !== 'FunctionStatement' && node.block.statements[0].execute !== false) {
 							node.block.statements.unshift({
 								type: 'FunctionStatement',
@@ -606,14 +599,14 @@ exports.Interpreter = (function() {
 								}
 
 								// update scope listeners
-								event('scope', scope.toJSON());
+								event('scope', [scope.toJSON()]);
 							},
 
 							done: function() {
 								// return to old scope
 								scope = scope.parent;
 
-								event('scope', scope.toJSON());
+								event('scope', [scope.toJSON()]);
 
 								// no returned expression, pass nothing
 								done(new Type.None());
