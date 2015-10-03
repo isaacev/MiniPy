@@ -108,8 +108,8 @@ exports.Interpreter = (function() {
 			event('load');
 		});
 
-		var exitOnce = once(function() {
-			event('exit');
+		var exitOnce = once(function(scopeJSON) {
+			event('exit', scopeJSON);
 		});
 
 		// function for triggering an event with an optional payload
@@ -242,7 +242,7 @@ exports.Interpreter = (function() {
 			var poppedBlock = loadedBlocks.pop();
 
 			if (poppedBlock === undefined) {
-				exitOnce();
+				exitOnce([scope.toJSON()]);
 
 				// call hooks and pass line details
 				clearWaitingHooks();
