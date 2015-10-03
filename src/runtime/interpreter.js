@@ -216,6 +216,7 @@ exports.Interpreter = (function() {
 			events = events || {};
 
 			this.statements = statements;
+			this.before = events.before || null;
 			this.done = events.done || null;
 			this.return = events.return || null;
 			this.returnTo = returnTo || null;
@@ -223,6 +224,7 @@ exports.Interpreter = (function() {
 
 		ExecutionBlock.prototype.slice = function() {
 			return new ExecutionBlock(this.statements.slice(1), {
+				before: this.before,
 				done: this.done,
 				return: this.return,
 			}, this.returnTo);
@@ -245,6 +247,11 @@ exports.Interpreter = (function() {
 
 				return null;
 			} else {
+				if (typeof poppedBlock.before === 'function') {
+					poppedBlock.before();
+					poppedBlock.before = null;
+				}
+
 				if (poppedBlock.statements.length > 0) {
 					var node = poppedBlock.statements[0];
 					loadedBlocks.push(poppedBlock.slice());
@@ -573,6 +580,25 @@ exports.Interpreter = (function() {
 						};
 
 						var block = new ExecutionBlock(node.block.statements.slice(0), {
+							before: function() {
+								// new level of scope
+								scope = new Scope(scope, {
+									name: node.name.value,
+									args: node.args.map(function(arg) {
+										return arg.value;
+									}),
+								});
+
+								// create function argument variables
+								for (var i = 0, l = Math.min(node.args.length, callArgValues.value.length); i < l; i++) {
+									var forceLocal = true;
+									scope.set(node.args[i], callArgValues.value[i], forceLocal);
+								}
+
+								// update scope listeners
+								event('scope', scope.toJSON());
+							},
+
 							done: function() {
 								// return to old scope
 								scope = scope.parent;
