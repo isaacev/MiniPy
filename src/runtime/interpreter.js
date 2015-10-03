@@ -27,7 +27,7 @@ exports.Interpreter = (function() {
 
 		// load passed global variables into scope
 		Object.keys(globals || {}).forEach(function(globalIdentifier) {
-			scope.set(globalIdentifier, new Type.Function(false, [], function(calleeNode, argsNodes, complexArgs, simpleArgs) {
+			scope.set(globalIdentifier, new Type.Function(false, [], function(calleeNode, argNodes, complexArgs, simpleArgs) {
 				var builtin = globals[globalIdentifier];
 
 				if (typeof builtin === 'function') {
