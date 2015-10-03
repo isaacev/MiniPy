@@ -32,7 +32,9 @@ exports.Interpreter = (function() {
 
 				if (typeof builtin === 'function') {
 					// no argument validation given, just pass the arguments in
-					return builtin.apply({}, simpleArgs);
+					return builtin.apply({
+						line: calleeNode.range.start.line,
+					}, simpleArgs);
 				} else {
 					// method configuration specified
 
