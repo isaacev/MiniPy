@@ -359,6 +359,13 @@ exports.Interpreter = (function() {
 
 					if (assignee.type === 'Identifier') {
 						exec(node.right, function(rightValue) {
+							if (rightValue.isType(ValueType.NONE)) {
+								throw node.right.error({
+									type: ErrorType.TYPE_VIOLATION,
+									message: 'Cannot use value None in an assignment',
+								});
+							}
+
 							// normal assignment to identifier
 							scope.set(assignee, rightValue);
 
@@ -380,6 +387,13 @@ exports.Interpreter = (function() {
 										} else {
 											// negative index (index telative to end of array)
 											exec(node.right, function(rightValue) {
+												if (rightValue.isType(ValueType.NONE)) {
+													throw node.right.error({
+														type: ErrorType.TYPE_VIOLATION,
+														message: 'Cannot use value None in an assignment',
+													});
+												}
+
 												if (subscriptValue.value < 0) {
 													rootValue.value[rootValue.value.length + subscriptValue.value] = rightValue;
 												} else {
