@@ -717,7 +717,18 @@ exports.Interpreter = (function() {
 							var popped = loadedBlocks.pop();
 
 							if (typeof popped.return === 'function') {
-								popped.return(null);
+								if (popped.returnTo !== null) {
+									// pop scope
+									scope = scope.parent;
+
+									popped.returnTo.script = function() {
+										// return data once interpreter has returned to the called expression
+										popped.return(new Type.None());
+										event('scope', [scope.toJSON()]);
+									};
+
+									loadedBlocks[loadedBlocks.length - 1].statements.unshift(popped.returnTo);
+								}
 
 								done();
 								return;
