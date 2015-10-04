@@ -505,6 +505,58 @@ exports.Interpreter = (function() {
 
 					break;
 
+				case 'DeleteStatement':
+					if (node.variable.type === 'Subscript') {
+						exec(node.variable.root, function(rootValue) {
+							if (rootValue.isType(ValueType.ARRAY)) {
+								exec(node.variable.subscript, function(subscriptValue) {
+									if (subscriptValue.isType(ValueType.NUMBER)) {
+										// check that removal index is in-bounds
+										var length = rootValue.value.length;
+										var givenIndex = subscriptValue.value;
+
+										if (givenIndex >= length || -givenIndex > length) {
+											throw node.variable.subscript.error({
+												type: ErrorType.OUT_OF_BOUNDS,
+												message: '"' + length + '" is out of bounds',
+											});
+										} else if (givenIndex < 0) {
+											// negative index
+											var index = length + givenIndex;
+										} else {
+											// positive index
+											var index = givenIndex
+										}
+
+										// remove element from `rootValue` array at index `subscriptValue`
+										rootValue.value.splice(index, 1);
+
+										event('scope', [scope.toJSON()]);
+
+										done();
+									} else {
+										throw node.variable.subscript.error({
+											type: ErrorType.TYPE_VIOLATION,
+											message: 'Expecting a Number, got a ' + subscriptValue.type,
+										});
+									}
+								});
+							} else {
+								throw node.variable.error({
+									type: ErrorType.ILLEGAL_STATEMENT,
+									message: 'Expecting a reference to an Array element',
+								});
+							}
+						})
+					} else {
+						throw node.variable.error({
+							type: ErrorType.ILLEGAL_STATEMENT,
+							message: 'Expecting a reference to an Array element',
+						});
+					}
+
+					break;
+
 				case 'IfStatement':
 					exec(node.condition, function(condition) {
 						if (condition.value === true) {

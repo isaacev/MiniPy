@@ -107,6 +107,17 @@ exports.Parser = (function() {
 					};
 				},
 
+				Delete: function(delKeyword, variable) {
+					this.type = 'DeleteStatement';
+					this.variable = variable;
+
+					this.range = delKeyword.range.union(variable.range);
+
+					this.error = function(details) {
+						return this.range.error(details);
+					};
+				},
+
 				Block: function(statements) {
 					this.type = 'Block';
 					this.statements = statements;
@@ -314,6 +325,20 @@ exports.Parser = (function() {
 						var rightParenToken = self.next(TokenType.PUNCTUATOR, ')');
 
 						return new self.nodes.expressions.Call(calleeExpression, leftParenToken, args, rightParenToken);
+					};
+
+					this.getPrecedence = function() {
+						return precedence;
+					};
+				},
+
+				Delete: function() {
+					var precedence = 100;
+
+					this.parse = function(parser, delKeywordToken) {
+						var variable = self.parseExpression();
+
+						return new self.nodes.expressions.Delete(delKeywordToken, variable);
 					};
 
 					this.getPrecedence = function() {
@@ -530,6 +555,7 @@ exports.Parser = (function() {
 		infix('[', new self.nodes.parselets.Subscript());
 		infix('(', new self.nodes.parselets.Call());
 
+		prefix('del', new self.nodes.parselets.Delete());
 		prefix('if', new self.nodes.parselets.If());
 		prefix('while', new self.nodes.parselets.While());
 		prefix('def', new self.nodes.parselets.Function());
