@@ -551,7 +551,7 @@ exports.Interpreter = (function() {
 					} else {
 						throw node.variable.error({
 							type: ErrorType.ILLEGAL_STATEMENT,
-							message: 'Expecting a reference to an Array element',
+							message: 'Expecting an Array subscript',
 						});
 					}
 
