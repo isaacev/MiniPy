@@ -17,6 +17,7 @@ exports.enums = {
 		UNKNOWN_OPERATION: 13,
 		OUT_OF_BOUNDS: 14,
 		DIVIDE_BY_ZERO: 15,
+		ILLEGAL_STATEMENT: 16,
 	},
 
 	TokenType: {

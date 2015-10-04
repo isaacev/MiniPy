@@ -655,7 +655,10 @@ exports.Interpreter = (function() {
 								}
 							}
 
-							throw new Error('Can only return from inside a function');
+							throw node.error({
+								type: ErrorType.ILLEGAL_STATEMENT,
+								message: 'Can only return from inside a function',
+							});
 						});
 					} else {
 						while (loadedBlocks.length > 0) {
@@ -669,7 +672,10 @@ exports.Interpreter = (function() {
 							}
 						}
 
-						throw new Error('Can only return from inside a function');
+						throw node.error({
+							type: ErrorType.ILLEGAL_STATEMENT,
+							message: 'Can only return from inside a function',
+						});
 					}
 
 					break;
@@ -713,7 +719,10 @@ exports.Interpreter = (function() {
 					break;
 
 				default:
-					throw new Error('Unknown statement with type "' + node.type + '"');
+					throw node.error({
+						type: ErrorType.ILLEGAL_STATEMENT,
+						message: 'Unknown statement with type "' + node.type + '"',
+					});
 			}
 		}
 
