@@ -6,9 +6,6 @@ var gulp = require('gulp');
 var concat = require('gulp-concat-util');
 var formatter = require('gulp-esformatter');
 
-// required for `test` task
-var mocha = require('gulp-mocha');
-
 var package = require('./package.json');
 
 // required for `bump` task
