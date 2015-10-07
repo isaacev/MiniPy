@@ -1,7 +1,6 @@
 # Notes
 
 ## TODO
-+ Improve PRINT to handle more than 1 argument
 + Rework error messages and error reporting (with remedy feature?)
 
 ## IDEAS
@@ -10,11 +9,6 @@
     + Unterminated string
     + Missing end paren
     + Missing end bracket?
-+ Better formatting for printed complex numbers (ex: 3.0414093201713376e+64)
-  given limited space of `.md-scope` and `.md-stdout`
-    + Maybe truncate displayed values and let the user see the full value in
-      the element `title` attribute?
-    + Strings should be truncated after a certain length too
 + Classify parsing erros into Minor/Major
     + Parser can keep parsing after Minor errors so that multiple errors
       can be reported on a single validation pass
