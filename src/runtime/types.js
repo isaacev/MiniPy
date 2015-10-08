@@ -1,8 +1,11 @@
 // [MiniPy] /src/runtime/types.js
 
 exports.Type = (function() {
-	var ErrorType = require('../enums').enums.ErrorType;
-	var ValueType = require('../enums').enums.ValueType;
+	// require type enumerations
+	var enums = require('../enums').enums;
+
+	var ErrorType = enums.ErrorType;
+	var ValueType = enums.ValueType;
 
 	function NoneValue() {
 		this.type = 'None';

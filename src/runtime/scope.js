@@ -1,8 +1,11 @@
 // [MiniPy] /src/runtime/Scope.js
 
 exports.Scope = (function() {
-	var ErrorType = require('../enums').enums.ErrorType;
-	var ValueType = require('../enums').enums.ValueType;
+	// require type enumerations
+	var enums = require('../enums').enums;
+
+	var ErrorType = enums.ErrorType;
+	var ValueType = enums.ValueType;
 
 	function simplifyValue(value) {
 		switch (value.type) {

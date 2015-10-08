@@ -1,9 +1,12 @@
 // [MiniPy] /src/parser/Parser.js
 
 exports.Parser = (function() {
-	var ErrorType = require('../enums').enums.ErrorType;
-	var TokenType = require('../enums').enums.TokenType;
-	var ValueType = require('../enums').enums.ValueType;
+	// require type enumerations
+	var enums = require('../enums').enums;
+
+	var ErrorType = enums.ErrorType;
+	var TokenType = enums.TokenType;
+	var ValueType = enums.ValueType;
 
 	function Parser(lexer) {
 		var self = this;

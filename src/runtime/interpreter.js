@@ -1,9 +1,12 @@
 // [MiniPy] /src/runtime/Interpreter.js
 
 exports.Interpreter = (function() {
-	var TokenType = require('../enums').enums.TokenType;
-	var ErrorType = require('../enums').enums.ErrorType;
-	var ValueType = require('../enums').enums.ValueType;
+	// require type enumerations
+	var enums = require('../enums').enums;
+
+	var ErrorType = enums.ErrorType;
+	var TokenType = enums.TokenType;
+	var ValueType = enums.ValueType;
 
 	var Type = require('./types').Type;
 	var Scope = require('./scope').Scope;

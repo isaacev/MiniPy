@@ -1,8 +1,11 @@
 // [MiniPy] /src/parser/Lexer.js
 
 exports.Lexer = (function() {
-	var ErrorType = require('../enums').enums.ErrorType;
-	var TokenType = require('../enums').enums.TokenType;
+	// require type enumerations
+	var enums = require('../enums').enums;
+
+	var ErrorType = enums.ErrorType;
+	var TokenType = enums.TokenType;
 
 	var Token = require('./token').Token;
 
