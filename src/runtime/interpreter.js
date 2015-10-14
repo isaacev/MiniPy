@@ -395,7 +395,7 @@ exports.Interpreter = (function() {
 								}
 
 								function compute(startSlice, endSlice) {
-									if (startSlice.get() >= rootValue.get().length || -startSlice > rootValue.get().length) {
+									if (startSlice.get() >= rootValue.get().length || -startSlice.get() > rootValue.get().length) {
 										throw assignee.slice[0].error({
 											type: ErrorType.OUT_OF_BOUNDS,
 											message: 'Index ' + startSlice.get() + ' is out of bounds of array with length ' + rootValue.get().length,
@@ -403,7 +403,7 @@ exports.Interpreter = (function() {
 									} else {
 										var positiveStart = (startSlice.get() < 0 ? rootValue.get().length + startSlice.get() : startSlice.get());
 
-										if (endSlice === undefined) {
+										if (assignee.slice[1] === null) {
 											var sliceLength = 1;
 										} else {
 											var positiveEnd = (endSlice.get() < 0 ? rootValue.get().length + endSlice.get() : endSlice.get());
@@ -420,7 +420,7 @@ exports.Interpreter = (function() {
 
 											if (assignee.slice[1] === null) {
 												// simple replacement at ONE position
-												rootValue.value[positiveStart] = rightValue;
+												rootValue.get()[positiveStart] = rightValue;
 											} else {
 												// replacement of entire slice
 												if (rightValue.isType(ValueType.ARRAY)) {
@@ -448,7 +448,7 @@ exports.Interpreter = (function() {
 												type: ErrorType.TYPE_VIOLATION,
 												message: 'Subscript value must be a number, instead was ' + endSlice.type,
 											});
-										} else if (endSlice.get() > rootValue.get().length || -endSlice > rootValue.get().length) {
+										} else if (endSlice.get() > rootValue.get().length || -endSlice.get() > rootValue.get().length) {
 											throw assignee.slice[1].error({
 												type: ErrorType.OUT_OF_BOUNDS,
 												message: 'Index ' + endSlice.get() + ' is out of bounds of array with length ' + rootValue.get().length,
