@@ -176,14 +176,6 @@ describe('Operations', function() {
 			test('test("abcdef", "abc" + "def")');
 		});
 
-		it('should access string characters with subscript notation', function() {
-			test('test("c", "abc"[2])');
-		});
-
-		it('should prevent modification with subscript notation', function() {
-			expect(MiniPy.run.bind(MiniPy, 'a = "abc"\na[0] = "_"')).to.throw(MiniPy.Error);
-		});
-
 		describe('Slices', function() {
 			it('should throw an error if either argument is not a number', function() {
 				expect(MiniPy.run.bind(MiniPy, '"abcdef"[1:"5"]')).to.throw(MiniPy.Error);
@@ -229,7 +221,18 @@ describe('Operations', function() {
 				test('test("", "abcdef"[5:0])');
 			});
 
-			// prevent modification of slice
+			it('should access string characters with subscript notation', function() {
+				test('test("c", "abc"[2])');
+			});
+
+			it('should prevent modification with subscript notation', function() {
+				expect(MiniPy.run.bind(MiniPy, 'a = "abc"\na[0] = "_"')).to.throw(MiniPy.Error);
+			});
+
+			it('should prevent modification of a string slice', function () {
+				expect(MiniPy.run.bind(MiniPy, 'a = "abc"\na[0:1] = "_"')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, 'a = "abc"\ndel a[1:2]')).to.throw(MiniPy.Error);
+			});
 		});
 	});
 
@@ -245,10 +248,6 @@ describe('Operations', function() {
 			// negative indices
 			test('test("d", ["a", "b", "c", "d"][-1])');
 			test('test("a", ["a", "b", "c", "d"][-4])');
-		});
-
-		it('should allow element modification with subscript notation', function() {
-			test('a = ["a", "b"]\na[0] = "z"\ntest("z", a[0])');
 		});
 
 		describe('Slices', function() {
