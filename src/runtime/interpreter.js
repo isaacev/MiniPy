@@ -433,6 +433,8 @@ exports.Interpreter = (function() {
 											}
 
 											// apply changes to scope
+											// TODO: check that this operation still allows for
+											// pointers between variable values
 											scope.set(assignee.root, rootValue);
 
 											// call applicable event
@@ -578,7 +580,6 @@ exports.Interpreter = (function() {
 					break;
 
 				case 'DeleteStatement':
-					// TODO
 					if (node.variable.type === 'Subscript') {
 						exec(node.variable.root, function(rootValue) {
 							if (rootValue.isType(ValueType.ARRAY)) {
