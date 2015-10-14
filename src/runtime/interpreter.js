@@ -582,46 +582,68 @@ exports.Interpreter = (function() {
 				case 'DeleteStatement':
 					if (node.variable.type === 'Subscript') {
 						exec(node.variable.root, function(rootValue) {
-							if (rootValue.isType(ValueType.ARRAY)) {
-								exec(node.variable.subscript, function(subscriptValue) {
-									if (subscriptValue.isType(ValueType.NUMBER)) {
-										// check that removal index is in-bounds
-										var length = rootValue.value.length;
-										var givenIndex = subscriptValue.value;
-
-										if (givenIndex >= length || -givenIndex > length) {
-											throw node.variable.subscript.error({
-												type: ErrorType.OUT_OF_BOUNDS,
-												message: '"' + length + '" is out of bounds',
-											});
-										} else if (givenIndex < 0) {
-											// negative index
-											var index = length + givenIndex;
-										} else {
-											// positive index
-											var index = givenIndex
-										}
-
-										// remove element from `rootValue` array at index `subscriptValue`
-										rootValue.value.splice(index, 1);
-
-										event('scope', [scope.toJSON()]);
-
-										done();
-									} else {
-										throw node.variable.subscript.error({
-											type: ErrorType.TYPE_VIOLATION,
-											message: 'Expecting a Number, got a ' + subscriptValue.type,
-										});
-									}
-								});
-							} else {
-								throw node.variable.error({
-									type: ErrorType.ILLEGAL_STATEMENT,
-									message: 'Expecting a reference to an Array element',
+							if (rootValue.isType(ValueType.ARRAY) === false) {
+								throw node.variable.root.error({
+									type: ErrorType.TYPE_VIOLATION,
+									message: 'Delete statement can only be used on arrays',
 								});
 							}
-						})
+
+							exec(node.variable.slice[0], function(startSlice) {
+								if (startSlice.isType(ValueType.NUMBER) === false) {
+									throw node.variable.slice[0].error({
+										type: ErrorType.TYPE_VIOLATION,
+										message: 'Subscript value must be a number, instead was ' + startSlice.type,
+									});
+								}
+
+								function compute(startSlice, endSlice) {
+									if (startSlice.get() >= rootValue.get().length || -startSlice.get() > rootValue.get().length) {
+										throw node.variable.slice[0].error({
+											type: ErrorType.OUT_OF_BOUNDS,
+											message: 'Index ' + startSlice.get() + ' is out of bounds for array with length ' + rootValue.get().length,
+										});
+									}
+
+									var positiveStart = (startSlice.get() < 0 ? rootValue.get().length + startSlice.get() : startSlice.get());
+
+									if (node.variable.slice[1] === null) {
+										var sliceLength = 1;
+									} else {
+										var positiveEnd = (endSlice.get() < 0 ? rootValue.get().length + endSlice.get() : endSlice.get());
+										var sliceLength = positiveEnd - positiveStart;
+									}
+
+									if (sliceLength >= 0) {
+										// delete `spliceLength` elements starting at index `startSlice`
+										rootValue.value.splice(positiveStart, sliceLength);
+									}
+
+									// call scope event
+									event('scope', [scope.toJSON()]);
+								}
+
+								if (node.variable.slice[1] !== null) {
+									exec(node.variable.slice[1], function(endSlice) {
+										if (endSlice.isType(ValueType.NUMBER) === false) {
+											throw node.variable.slice[1].error({
+												type: ErrorType.TYPE_VIOLATION,
+												message: 'Subscript value must be a number, instead was ' + endSlice.type,
+											});
+										} else if (endSlice.get() > rootValue.get().length || -endSlice.get() > rootValue.get().length) {
+											throw node.variable.slice[1].error({
+												type: ErrorType.OUT_OF_BOUNDS,
+												message: 'Index ' + endSlice.get() + ' is out of bounds for array with length ' + rootValue.get().length,
+											});
+										}
+
+										compute(startSlice, endSlice);
+									});
+								} else {
+									compute(startSlice);
+								}
+							});
+						});
 					} else {
 						throw node.variable.error({
 							type: ErrorType.ILLEGAL_STATEMENT,
