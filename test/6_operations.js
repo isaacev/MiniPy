@@ -8,7 +8,7 @@ describe('Operations', function() {
 		MiniPy.run(script, {
 			globals: {
 				test: function(should, is) {
-					expect(is.value).to.deep.equal(should.value);
+					expect(is).to.deep.equal(should);
 				}
 			}
 		});
