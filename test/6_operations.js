@@ -301,6 +301,32 @@ describe('Operations', function() {
 				test('a = [1, 2, 3]\na[2:3] = ["a", "b"]\ntest([1, 2, "a", "b"], a)');
 				test('a = [1, 2, 3]\na[0:3] = ["a", "b"]\ntest(["a", "b"], a)');
 			});
+
+			it('should allow element modification with subscript notation', function() {
+				test('a = ["a", "b"]\na[0] = "z"\ntest("z", a[0])');
+			});
+
+			it('should delete an element', function() {
+				test('a = [1, 2, 3]\ndel a[1]\ntest([1, 3], a)');
+				test('a = [1, 2, 3]\ndel a[0]\ntest([2, 3], a)');
+			});
+
+			it('should delete a slice', function() {
+				test('a = [1, 2, 3, 4]\ndel a[1:2]\ntest([1, 3, 4], a)');
+				test('a = [1, 2, 3, 4]\ndel a[0:1]\ntest([2, 3, 4], a)');
+				test('a = [1, 2, 3, 4]\ndel a[0:0]\ntest([1, 2, 3, 4], a)');
+				test('a = [1, 2, 3, 4]\ndel a[0:3]\ntest([4], a)');
+				test('a = [1, 2, 3, 4]\ndel a[0:4]\ntest([], a)');
+
+				test('a = [1, 2, 3, 4]\ndel a[0:-1]\ntest([4], a)');
+				test('a = [1, 2, 3, 4]\ndel a[0:-2]\ntest([3, 4], a)');
+				test('a = [1, 2, 3, 4]\ndel a[-2:1]\ntest([1, 2, 3, 4], a)');
+			});
+
+			it('should throw an error if a deleted slice is out of bounds', function() {
+				expect(MiniPy.run.bind(MiniPy, 'a = [1, 2, 3]\ndel a[0:5]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, 'a = [1, 2, 3]\ndel a[-4:0]')).to.throw(MiniPy.Error);
+			});
 		});
 	});
 
