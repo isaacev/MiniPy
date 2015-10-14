@@ -192,6 +192,52 @@ exports.Type = (function() {
 			}
 		}
 
+		// handle slices special since they contain two operand arguments
+		if (operatorSymbol === '[' && operandValue instanceof Array) {
+			var sliceStart = operandValue[0];
+			var sliceEnd = operandValue[1];
+
+			if (sliceStart.isType(ValueType.NUMBER) === true && sliceEnd.isType(ValueType.NUMBER)) {
+				// both are numbers
+
+				// check that both are in-bounds
+				var len = this.get().length;
+				var a = sliceStart.get();
+				var b = sliceEnd.get();
+
+				// convert negative indices to positive
+				a = (a < 0 ? len + a : a);
+				b = (b < 0 ? len + b : b);
+
+				if (a < 0 || a >= len) {
+					throw {
+						type: ErrorType.OUT_OF_BOUNDS,
+						message: '"' + sliceStart.get() + '" is out of bounds',
+					};
+				} else if (b < 0 || b > len) {
+					throw {
+						type: ErrorType.OUT_OF_BOUNDS,
+						message: '"' + sliceEnd.get() + '" is out of bounds',
+					};
+				} else {
+					// both numbers, both in-bounds
+					if (b < a) {
+						// in the case where the end of the slice is less than the start of the
+						// slice, Python dictates that an empty string be returned whereas the
+						// JavaScript `substring` method will return a substring from [b : a]
+						return new StringValue('');
+					} else {
+						return new StringValue(this.get().substring(a, b) || '');
+					}
+				}
+			} else {
+				throw {
+					type: ErrorType.TYPE_VIOLATION,
+					message: 'Expected a number',
+				};
+			}
+		}
+
 		var a = this.value;
 		var b = operandValue.get();
 
@@ -262,6 +308,45 @@ exports.Type = (function() {
 				throw {
 					type: ErrorType.TYPE_VIOLATION,
 					message: 'Expected a ' + message,
+				};
+			}
+		}
+
+		// handle slices special since they contain two operand arguments
+		if (operatorSymbol === '[' && operandValue instanceof Array) {
+			var sliceStart = operandValue[0];
+			var sliceEnd = operandValue[1];
+
+			if (sliceStart.isType(ValueType.NUMBER) === true && sliceEnd.isType(ValueType.NUMBER)) {
+				// both are numbers
+
+				// check that both are in-bounds
+				var len = this.get().length;
+				var a = sliceStart.get();
+				var b = sliceEnd.get();
+
+				// convert negative indices to positive
+				a = (a < 0 ? len + a : a);
+				b = (b < 0 ? len + b : b);
+
+				if (a < 0 || a >= len) {
+					throw {
+						type: ErrorType.OUT_OF_BOUNDS,
+						message: '"' + sliceStart.get() + '" is out of bounds',
+					};
+				} else if (b < 0 || b > len) {
+					throw {
+						type: ErrorType.OUT_OF_BOUNDS,
+						message: '"' + sliceEnd.get() + '" is out of bounds',
+					};
+				} else {
+					// both numbers, both in-bounds
+					return new ArrayValue(this.get().slice(a, b) || []);
+				}
+			} else {
+				throw {
+					type: ErrorType.TYPE_VIOLATION,
+					message: 'Expected a number',
 				};
 			}
 		}

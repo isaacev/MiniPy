@@ -379,48 +379,86 @@ exports.Interpreter = (function() {
 						});
 					} else if (assignee.type === 'Subscript') {
 						exec(assignee.root, function(rootValue) {
-							exec(assignee.subscript, function(subscriptValue) {
-								if (subscriptValue instanceof Type.Number) {
-									if (rootValue instanceof Type.Array) {
-										if (subscriptValue.value >= rootValue.value.length || -subscriptValue > rootValue.value.length) {
-											throw assignee.subscript.error({
-												type: ErrorType.OUT_OF_BOUNDS,
-												message: 'Index ' + indexToChange.value + ' is out of bounds of array with length ' + root.value.length,
-											});
-										} else {
-											// negative index (index telative to end of array)
-											exec(node.right, function(rightValue) {
-												if (rightValue.isType(ValueType.NONE)) {
-													throw node.right.error({
-														type: ErrorType.TYPE_VIOLATION,
-														message: 'Cannot use value None in an assignment',
-													});
-												}
+							if (rootValue.isType(ValueType.ARRAY) === false) {
+								throw assignee.root.error({
+									type: ErrorType.TYPE_VIOLATION,
+									message: 'Subscript assignment notation can only be used on arrays',
+								});
+							}
 
-												if (subscriptValue.value < 0) {
-													rootValue.value[rootValue.value.length + subscriptValue.value] = rightValue;
-												} else {
-													rootValue.value[subscriptValue.value] = rightValue;
-												}
+							exec(assignee.slice[0], function(startSlice) {
+								if (startSlice.isType(ValueType.NUMBER) === false) {
+									throw assignee.slice[0].error({
+										type: ErrorType.TYPE_VIOLATION,
+										message: 'Subscript value must be a number, instead was ' + startSlice.type,
+									});
+								}
 
-												// apply changes to scope
-												scope.set(assignee.root, rootValue);
-
-												// call applicable event
-												event('scope', [scope.toJSON()]);
-											});
-										}
+								function compute(startSlice, endSlice) {
+									if (startSlice.get() >= rootValue.get().length || -startSlice > rootValue.get().length) {
+										throw assignee.slice[0].error({
+											type: ErrorType.OUT_OF_BOUNDS,
+											message: 'Index ' + startSlice.get() + ' is out of bounds of array with length ' + rootValue.get().length,
+										});
 									} else {
-										throw assignee.root.error({
-											type: ErrorType.TYPE_VIOLATION,
-											message: 'Subscript assignment notation can only be used on arrays',
+										var positiveStart = (startSlice.get() < 0 ? rootValue.get().length + startSlice.get() : startSlice.get());
+
+										if (endSlice === undefined) {
+											var sliceLength = 1;
+										} else {
+											var positiveEnd = (endSlice.get() < 0 ? rootValue.get().length + endSlice.get() : endSlice.get());
+											var sliceLength = positiveEnd - positiveStart;
+										}
+
+										exec(node.right, function(rightValue) {
+											if (rightValue.isType(ValueType.NONE)) {
+												throw node.right.error({
+													type: ErrorType.TYPE_VIOLATION,
+													message: 'Cannot use value None in an assignment',
+												});
+											}
+
+											if (assignee.slice[1] === null) {
+												// simple replacement at ONE position
+												rootValue.value[positiveStart] = rightValue;
+											} else {
+												// replacement of entire slice
+												if (rightValue.isType(ValueType.ARRAY)) {
+													var rightValueUnwound = rightValue.get();
+												} else {
+													var rightValueUnwound = rightValue;
+												}
+
+												rootValue.value.splice.apply(rootValue.value, [positiveStart, sliceLength].concat(rightValueUnwound));
+											}
+
+											// apply changes to scope
+											scope.set(assignee.root, rootValue);
+
+											// call applicable event
+											event('scope', [scope.toJSON()]);
 										});
 									}
-								} else {
-									assignee.subscript.error({
-										type: ErrorType.TYPE_VIOLATION,
-										message: 'Subscript value must be a number, instead was ' + subscriptValue.type,
+								}
+
+								if (assignee.slice[1] !== null) {
+									exec(assignee.slice[1], function(endSlice) {
+										if (endSlice.isType(ValueType.NUMBER) === false) {
+											throw assignee.slice[1].error({
+												type: ErrorType.TYPE_VIOLATION,
+												message: 'Subscript value must be a number, instead was ' + endSlice.type,
+											});
+										} else if (endSlice.get() > rootValue.get().length || -endSlice > rootValue.get().length) {
+											throw assignee.slice[1].error({
+												type: ErrorType.OUT_OF_BOUNDS,
+												message: 'Index ' + endSlice.get() + ' is out of bounds of array with length ' + rootValue.get().length,
+											});
+										}
+
+										compute(startSlice, endSlice);
 									});
+								} else {
+									compute(startSlice);
 								}
 							});
 						});
@@ -499,30 +537,48 @@ exports.Interpreter = (function() {
 					var operatorSymbol = '[';
 
 					exec(node.root, function(rootValue) {
-						exec(node.subscript, function(subscriptValue) {
-							try {
-								var isUnary = false;
-								var computedValue = rootValue.operation(isUnary, operatorSymbol, subscriptValue);
-							} catch (details) {
-								// catch errors created by the operation and based on the error type,
-								// assign the errors to the offending expressions or tokens
-								switch (details.type) {
-									case ErrorType.TYPE_VIOLATION:
-									case ErrorType.OUT_OF_BOUNDS:
-										// errors caused by the subscript index
-										throw node.subscript.error(details);
-									default:
-										throw node.error(details);
+						exec(node.slice[0], function(sliceStart) {
+							function compute(operand) {
+								try {
+									var isUnary = false;
+									var computedValue = rootValue.operation(isUnary, operatorSymbol, operand);
+								} catch (details) {
+									// catch errors created by the operation and based on the error type,
+									// assign the errors to the offending expressions or tokens
+									switch (details.type) {
+										case ErrorType.TYPE_VIOLATION:
+										case ErrorType.OUT_OF_BOUNDS:
+											// errors caused by the subscript index
+											if (node.slice[1] === null) {
+												// if only slice start specified, only hold that token in error
+												throw node.slice[0].error(details);
+											} else {
+												// if slice start and slice end explicitly specified in program,
+												// make range including both numbers the error
+												throw node.slice[0].range.union(node.slice[1].range).error(details);
+											}
+										default:
+											throw node.error(details);
+									}
 								}
+
+								done(computedValue);
 							}
 
-							done(computedValue);
+							if (node.slice[1] === null) {
+								compute(sliceStart);
+							} else {
+								exec(node.slice[1], function(sliceEnd) {
+									compute([sliceStart, sliceEnd])
+								});
+							}
 						});
 					});
 
 					break;
 
 				case 'DeleteStatement':
+					// TODO
 					if (node.variable.type === 'Subscript') {
 						exec(node.variable.root, function(rootValue) {
 							if (rootValue.isType(ValueType.ARRAY)) {

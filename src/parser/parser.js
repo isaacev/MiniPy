@@ -84,10 +84,10 @@ exports.Parser = (function() {
 					};
 				},
 
-				Subscript: function(root, leftBracket, subscript, rightBracket) {
+				Subscript: function(root, leftBracket, sliceStart, sliceEnd, rightBracket) {
 					this.type = 'Subscript';
 					this.root = root;
-					this.subscript = subscript;
+					this.slice = [sliceStart, sliceEnd];
 					this.operator = leftBracket;
 
 					this.range = root.range.union(rightBracket.range);
@@ -295,12 +295,19 @@ exports.Parser = (function() {
 					var precedence = 80;
 
 					this.parse = function(parser, leftBracketToken, rootExpression) {
-						var subscriptIndex = parser.parseExpression();
+						var sliceStart = parser.parseExpression();
+
+						if (self.peek(TokenType.PUNCTUATOR, ':')) {
+							self.next(TokenType.PUNCTUATOR, ':');
+							var sliceEnd = parser.parseExpression();
+						} else {
+							var sliceEnd = null;
+						}
 
 						// consume right bracket
 						var rightBracketToken = self.next(TokenType.PUNCTUATOR, ']');
 
-						return new self.nodes.expressions.Subscript(rootExpression, leftBracketToken, subscriptIndex, rightBracketToken);
+						return new self.nodes.expressions.Subscript(rootExpression, leftBracketToken, sliceStart, sliceEnd, rightBracketToken);
 					};
 
 					this.getPrecedence = function() {
