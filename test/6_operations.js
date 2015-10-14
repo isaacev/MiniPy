@@ -183,6 +183,54 @@ describe('Operations', function() {
 		it('should prevent modification with subscript notation', function() {
 			expect(MiniPy.run.bind(MiniPy, 'a = "abc"\na[0] = "_"')).to.throw(MiniPy.Error);
 		});
+
+		describe('Slices', function() {
+			it('should throw an error if either argument is not a number', function() {
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[1:"5"]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"["2":5]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"["2":True]')).to.throw(MiniPy.Error);
+			});
+
+			it('should throw an error if both arguments are not present', function() {
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[2:]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[:2]')).to.throw(MiniPy.Error);
+			});
+
+			it('should access a slice of the string', function() {
+				test('test("bc", "abcdef"[1:3])');
+				test('test("a", "abcdef"[0:1])');
+				test('test("abcdef", "abcdef"[0:6])');
+			});
+
+			it('should permit negative indicies', function() {
+				test('test("de", "abcdef"[3:-1])');
+				test('test("b", "abcdef"[1:-4])');
+			});
+
+			it('should throw an error if either index is out of bounds', function() {
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[0:12]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[0:-10]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[12:4]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[-12:2]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '"abcdef"[0:7]')).to.throw(MiniPy.Error);
+			});
+
+			it('should return an empty string if the indicies are equal', function() {
+				test('test("", "abcdef"[3:3])');
+				test('test("", "abcdef"[0:0])');
+				test('test("", "abcdef"[5:5])');
+			});
+
+			it('should return an empty string if the indicies are reversed', function() {
+				test('test("bc", "abcdef"[1:3])');
+				test('test("", "abcdef"[3:1])');
+
+				test('test("abcdef", "abcdef"[0:6])');
+				test('test("", "abcdef"[5:0])');
+			});
+
+			// prevent modification of slice
+		});
 	});
 
 	describe('Arrays', function() {
@@ -201,6 +249,58 @@ describe('Operations', function() {
 
 		it('should allow element modification with subscript notation', function() {
 			test('a = ["a", "b"]\na[0] = "z"\ntest("z", a[0])');
+		});
+
+		describe('Slices', function() {
+			it('should throw an error if either argument is not a number', function() {
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][1:"5"]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6]["2":5]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6]["2":True]')).to.throw(MiniPy.Error);
+			});
+
+			it('should throw an error if both arguments are not present', function() {
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][2:]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][:2]')).to.throw(MiniPy.Error);
+			});
+
+			it('should access a slice of the string', function() {
+				test('test([2, 3], [1, 2, 3, 4, 5, 6][1:3])');
+				test('test([1], [1, 2, 3, 4, 5, 6][0:1])');
+				test('test([1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6][0:6])');
+			});
+
+			it('should permit negative indicies', function() {
+				test('test([4, 5], [1, 2, 3, 4, 5, 6][3:-1])');
+				test('test([2], [1, 2, 3, 4, 5, 6][1:-4])');
+			});
+
+			it('should throw an error if either index is out of bounds', function() {
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][0:12]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][0:-10]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][12:4]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][-12:2]')).to.throw(MiniPy.Error);
+				expect(MiniPy.run.bind(MiniPy, '[1, 2, 3, 4, 5, 6][0:7]')).to.throw(MiniPy.Error);
+			});
+
+			it('should return an empty string if the indicies are equal', function() {
+				test('test([], [1, 2, 3, 4, 5, 6][3:3])');
+				test('test([], [1, 2, 3, 4, 5, 6][0:0])');
+				test('test([], [1, 2, 3, 4, 5, 6][5:5])');
+			});
+
+			it('should return an empty string if the indicies are reversed', function() {
+				test('test([2, 3], [1, 2, 3, 4, 5, 6][1:3])');
+				test('test([], [1, 2, 3, 4, 5, 6][3:1])');
+
+				test('test([1, 2, 3, 4, 5, 6], [1, 2, 3, 4, 5, 6][0:6])');
+				test('test([], [1, 2, 3, 4, 5, 6][5:0])');
+			});
+
+			it('should allow replacement of slice', function() {
+				test('a = [1, 2, 3]\na[2:2] = ["a", "b"]\ntest([1, 2, "a", "b", 3], a)');
+				test('a = [1, 2, 3]\na[2:3] = ["a", "b"]\ntest([1, 2, "a", "b"], a)');
+				test('a = [1, 2, 3]\na[0:3] = ["a", "b"]\ntest(["a", "b"], a)');
+			});
 		});
 	});
 
