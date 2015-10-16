@@ -49,7 +49,7 @@ gulp.task('build', function() {
 });
 
 gulp.task('bump', function() {
-	gulp.src('./package.json')
+	gulp.src(['./package.json', './bower.json'])
 		.pipe(bump())
 		.pipe(gulp.dest('./'));
 });
