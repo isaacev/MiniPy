@@ -1,4 +1,4 @@
-// MiniPy.js v1.5.0
+// MiniPy.js v1.5.1
 
 (function(root) {
 	var exports = {};
