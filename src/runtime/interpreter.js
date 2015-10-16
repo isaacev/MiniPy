@@ -781,6 +781,15 @@ exports.Interpreter = (function() {
 				case 'ReturnStatement':
 					if (node.arg !== null) {
 						exec(node.arg, function(returnValue) {
+							// explicitly prevent currying by the returning of functions from functions
+							// design decision made to avoid the need to implement complex scoping rules
+							if (returnValue.isType(ValueType.FUNCTION)) {
+								throw node.arg.error({
+									type: ErrorType.TYPE_VIOLATION,
+									message: 'Functions are not allowed to return other functions',
+								});
+							}
+
 							while (loadedBlocks.length > 0) {
 								var popped = loadedBlocks.pop();
 
