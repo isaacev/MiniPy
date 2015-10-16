@@ -3,50 +3,73 @@
 var State = (function(scopeElementList, stdoutElementList) {
 	var knownVariables = {};
 
-	var variableTemplate = '<li data-identifier={identifier}><span class="identifier">{identifier}</span><span class="value {type}">{value}</span></li>';
-	var printTemplate = '<li><span class="value {type}">{output}</span><span class="origin">{line}</span></li>';
+	var printTemplate = '<li>{value}<span class="origin">{line}</span></li>';
+	var variableTemplate = '<li data-identifier="{identifier}"><span class="identifier">{identifier}</span>{value}</li>';
+	var valueTemplate = '<span class="{type}">{value}</span>';
+	var punctuationTemplate = '<span class="punctuation">{symbol}</span>';
+	var scopeTemplate = '<li class="scope"><span class="function-declaration">{declaration}</span><ul>{variables}</ul></li>';
 
-	function hasVariable(identifier) {
-		return (knownVariables[identifier] === true);
+	function renderPunctuation(symbol) {
+		return punctuationTemplate.replace('{symbol}', symbol);
 	}
 
-	function updateVariable(variable) {
-		var variableElem = scopeElementList.children('[data-identifier="' + variable.identifier.toString() + '"]');
+	function renderValue(value) {
+		if (value instanceof Array) {
+			// array
+			var leftBracket = renderPunctuation('[');
+			var rightBracket = renderPunctuation(']');
+			var comma = renderPunctuation(',');
 
-		if (variable.announceMutation !== false) {
-			// give modified variable element a mutation halo
-			scopeElementList.children('.mutating').removeClass('mutating');
-			variableElem.addClass('mutating');
+			// convert array of values into array of HTML strings
+			var elementsHtmlStrings = value.map(function(elementValue) {
+				return renderValue(elementValue);
+			});
+
+			// join array element HTML strings into large string separated
+			// by commas
+			return leftBracket + elementsHtmlStrings.join(comma) + rightBracket;
+		} else {
+			// literal value
+			return valueTemplate.replace('{type}', typeof value).replace('{value}', value.toString().replace(/\s/g, '&nbsp;'));
 		}
-
-		var newType = typeof variable.value;
-		var newValue = variable.value.toString();
-
-		// update DOM with new values
-		variableElem
-			.removeClass('number string boolean')
-			.addClass(newType)
-			.children('.value').text(newValue);
 	}
 
-	function createVariable(variable) {
-		// add identifier to list of known variables
-		knownVariables[variable.identifier.toString()] = true;
+	function renderFunctionDeclaration(name, args) {
+		return 'def ' + name + '(' + args.join(', ') + ')';
+	}
 
-		var html = variableTemplate
-			.replace('{identifier}', variable.identifier)
-			.replace('{identifier}', variable.identifier)
-			.replace('{type}', typeof variable.value)
-			.replace('{value}', variable.value.toString());
+	function renderScope(scope) {
+		var variablesHtml = Object.keys(scope.variables || {}).reduce(function(html, identifier) {
+			var value = scope.variables[identifier];
 
-		// add to DOM
-		var variableElem = $(html).appendTo(scopeElementList);
+			if (value.args instanceof Array) {
+				// function, ignore
+				return html;
+			} else {
+				return html + variableTemplate
+					.replace('{identifier}', identifier)
+					.replace('{identifier}', identifier)
+					.replace('{value}', '<span class="value">' + renderValue(value) + '</span>');
+			}
+		}, '');
 
-		if (variable.announceMutation !== false) {
-			// give new variable element a mutation halo
-			scopeElementList.children('.mutating').removeClass('mutating');
-			variableElem.addClass('mutating');
+		if (scope.subscope !== undefined) {
+			var subscopeHtml = renderScope(scope.subscope);
+		} else {
+			var subscopeHtml = '';
 		}
+
+		if (scope.name !== undefined && scope.args instanceof Array) {
+			return scopeTemplate
+				.replace('{declaration}', renderFunctionDeclaration(scope.name, scope.args))
+				.replace('{variables}', variablesHtml + subscopeHtml);
+		} else {
+			return variablesHtml + subscopeHtml;
+		}
+	}
+
+	function update(scope) {
+		scopeElementList.html(renderScope(scope));
 	}
 
 	function clearMutationHalo() {
@@ -55,16 +78,15 @@ var State = (function(scopeElementList, stdoutElementList) {
 	}
 
 	function printOut(results) {
-		// TODO: only prints one print argument currently
-		var value = results.arguments[0];
+		var valueHTML = renderValue(results.arguments[0]);
 
 		var html = printTemplate
-			.replace('{type}', typeof value)
-			.replace('{output}', value.toString())
+			.replace('{type}', 'line')
+			.replace('{value}', '<span class="value">' + valueHTML + '</span>')
 			// switch from 0-based line count (MiniPy) to 1-based (visual editor)
 			.replace('{line}', results.from + 1);
 
-		var println = $(html).prependTo(stdoutElementList);
+		var println = $(html).appendTo(stdoutElementList);
 
 		if (results.announceMutation !== false) {
 			// give printed line element a mutation halo
@@ -80,11 +102,9 @@ var State = (function(scopeElementList, stdoutElementList) {
 	}
 
 	return {
-		hasVariable: hasVariable,
-		updateVariable: updateVariable,
-		createVariable: createVariable,
+		update: update,
 		clearMutationHalo: clearMutationHalo,
 		printOut: printOut,
 		reset: reset,
 	};
-}($('#scope ul'), $('#stdout ul')));
+});

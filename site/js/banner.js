@@ -1,6 +1,6 @@
 // [MiniPy] /site/js/banner.js
 
-var Banner = (function(editor) {
+var Banner = (function(editorWrapperElement) {
 	var types = {
 		GENERIC: 0,
 		OK: 1,
@@ -21,18 +21,20 @@ var Banner = (function(editor) {
 		fadeOut: 500,
 	};
 
-	var template = '<div id="banner" class="type-{type}" style="display:none">{message}</div>';
+	var template = '<div class="mp-banner mp-banner-type-{type}" style="display:none"><i class="icon"></i>{message}</div>';
 
 	var currentBanner = null;
 
 	function show(banner) {
-		$('#banner').remove();
+		if (currentBanner !== null) {
+			currentBanner.remove();
+		}
 
 		var html = template
 			.replace('{type}', names[banner.type || 0])
 			.replace('{message}', banner.message || '');
 
-		currentBanner = $(html).appendTo(editor);
+		currentBanner = $(html).appendTo(editorWrapperElement);
 
 		if (banner.type === types.ERROR) {
 			currentBanner
@@ -63,4 +65,4 @@ var Banner = (function(editor) {
 		WARNING: types.WARNING,
 		ERROR: types.ERROR,
 	};
-}($('#editor')));
+});

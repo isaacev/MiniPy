@@ -1,64 +1,60 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 	<head>
 		<title>Learn Python</title>
 
-		<!-- <link rel="stylesheet" type="text/css" href="../bower_components/font-awesome/css/font-awesome.css"> -->
-		<!-- <link rel="stylesheet" type="text/css" href="../bower_components/codemirror/lib/codemirror.css"> -->
-		<!-- <link rel="stylesheet" type="text/css" href="../bower_components/codemirror/theme/neat.css"> -->
-		<!-- <link rel="stylesheet" type="text/css" href="css/main.css"> -->
+		<link rel="stylesheet" type="text/css" href="bower_components/CodeMirror/lib/codemirror.css">
+		<link rel="stylesheet" type="text/css" href="bower_components/CodeMirror/theme/neat.css">
 
-		<link rel="stylesheet" type="text/css" href="site/css/concat.css">
+		<link rel="stylesheet" type="text/css" href="site/css/main.css">
+		<link rel="stylesheet" type="text/css" href="site/css/fullpage.css">
 	</head>
 	<body>
-		<div id="controls">
-			<button class="control-button" data-command="run">Run</button>
-			<button class="control-button" data-command="validate">Check</button>
-			<button class="control-button" data-command="step">Step</button>
-			<button class="control-button disabled" data-command="stop">Stop</button>
+		<div class="mp-controls">
+			<button class="mp-control-button" data-command="run"><i class="icon"></i>Run</button>
+			<button class="mp-control-button" data-command="validate"><i class="icon"></i>Check</button>
+			<button class="mp-control-button" data-command="step"><i class="icon"></i>Step</button>
+			<button class="mp-control-button mp-button-disabled" data-command="stop"><i class="icon"></i>Stop</button>
+			<button class="mp-control-button" data-command="reset"><i class="icon"></i>Reset</button>
 		</div>
-		<div id="debugger">
-			<div id="editor" class="bordered">
-				<div class="panel-description">Python Mini</div>
+		<div class="mp-program-select">
+			<ul></ul>
+			<div class="mp-program-description"></div>
+		</div>
+		<div class="mp-debugger">
+			<div class="mp-editor mp-panel-bordered">
+				<div class="mp-panel-description"><i class="icon"></i>Python Mini</div>
 			</div>
-			<div id="runtime">
-				<div id="wrapper">
-					<div id="scope" class="bordered">
-						<div class="panel-description">Scope</div>
-						<div class="shadow-top"></div>
-						<div class="shadow-bottom"></div>
+			<div class="mp-runtime">
+				<div class="mp-wrapper">
+					<div class="mp-scope mp-panel-bordered">
+						<div class="mp-panel-description">Scope</div>
+						<div class="mp-shadow-top"></div>
+						<div class="mp-shadow-bottom"></div>
 						<ul></ul>
 					</div>
-					<div id="stdout" class="bordered">
-						<div class="panel-description">Output</div>
-						<div class="shadow-top"></div>
-						<div class="shadow-bottom"></div>
+					<div class="mp-stdout mp-panel-bordered">
+						<div class="mp-panel-description">Output</div>
+						<div class="mp-shadow-top"></div>
+						<div class="mp-shadow-bottom"></div>
 						<ul></ul>
 					</div>
 				</div>
 			</div>
 		</div>
 
-		<!-- Bower modules -->
+		<!-- 3rd party libraries -->
 		<script src="bower_components/jquery/dist/jquery.min.js"></script>
-		<script src="bower_components/codemirror/lib/codemirror.js"></script>
-		<script src="bower_components/codemirror/mode/python/python.js"></script>
-		<script src="bower_components/localforage/dist/localforage.min.js"></script>
-
-		<!-- misc libraries -->
-		<script src="site/js/libs/mousetrap.min.js"></script>
+		<script src="bower_components/CodeMirror/lib/codemirror.js"></script>
+		<script src="bower_components/CodeMirror/mode/python/python.js"></script>
 
 		<!-- the magic (ideally) -->
-		<script src="build/minipy.js"></script>
+		<script src="build/1.5.0.js"></script>
 
 		<!-- page-specific scripts -->
-		<!-- <script src="js/shortcuts.js"></script> -->
-		<!-- <script src="js/app.js"></script> -->
-		<!-- <script src="js/banner.js"></script> -->
-		<!-- <script src="js/state.js"></script> -->
-		<!-- <script src="js/error.js"></script> -->
-		<!-- <script src="js/storage.js"></script> -->
-
-		<script src="site/js/concat.js"></script>
+		<script src="site/js/banner.js"></script>
+		<script src="site/js/state.js"></script>
+		<script src="site/js/error.js"></script>
+		<script src="site/js/fullpage.js"></script>
 	</body>
 </html>

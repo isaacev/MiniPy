@@ -1,8 +1,8 @@
 // [MiniPy] /site/js/error.js
 
-var ErrorControl = (function(mirror) {
+var ErrorControl = (function(mirror, BannerHandler) {
 	var markOptions = {
-		className: 'error-token',
+		className: 'mp-error-token',
 		clearOnEnter: true,
 	};
 
@@ -10,13 +10,14 @@ var ErrorControl = (function(mirror) {
 		return (typeof n === 'number' && n >= 0);
 	}
 
-	function post (error) {
-		if (error instanceof MiniPy.debug.MiniPyError) {
+	function post(error) {
+		console.log(error);
+		if (error instanceof MiniPy.Error) {
 			// handle MiniPy error
 
 			// display error banner
-			Banner.show({
-				type: Banner.ERROR,
+			BannerHandler.show({
+				type: BannerHandler.ERROR,
 				message: error.message,
 			});
 
@@ -58,8 +59,8 @@ var ErrorControl = (function(mirror) {
 			});
 		} else {
 			// error not created by script
-			Banner.show({
-				type: Banner.ERROR,
+			BannerHandler.show({
+				type: BannerHandler.ERROR,
 				message: error.message,
 			});
 		}
@@ -68,4 +69,4 @@ var ErrorControl = (function(mirror) {
 	return {
 		post: post,
 	};
-}(cm));
+});
