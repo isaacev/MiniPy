@@ -760,10 +760,20 @@ exports.Parser = (function() {
 				this.next(TokenType.DEDENT);
 				break;
 			} else if (this.peek(TokenType.INDENT) || this.peek(TokenType.EOF) || this.peek() === null) {
-				var next = this.next();
-				throw next.error({
+				var badToken = this.next();
+				
+				throw badToken.error({
 					type: ErrorType.UNEXPECTED_TOKEN,
 					message: 'Expected end of indentation',
+				});
+			} else if (['IfStatement', 'WhileStatement', 'FunctionStatement'].indexOf(latest.type) === -1) {
+				// a non-block expression is NOT followed by a line terminator
+				var badToken = this.peek() || this.lexer.curr();
+
+				throw badToken.error({
+					type: ErrorType.UNEXPECTED_TOKEN,
+					message: 'Unexpected ' +
+						(badToken.type === TokenType.PUNCTUATOR ? badToken.value : badToken.type),
 				});
 			}
 		}
