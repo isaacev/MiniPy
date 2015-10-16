@@ -26,7 +26,7 @@ exports.Interpreter = (function() {
 	}
 
 	function Interpreter(ast, globals) {
-		var scope = new Scope(null);
+		var scope = new Scope(null, ast.locallyDefined);
 
 		// load passed global variables into scope
 		Object.keys(globals || {}).forEach(function(globalIdentifier) {
@@ -733,7 +733,7 @@ exports.Interpreter = (function() {
 						var block = new ExecutionBlock(node.block.statements.slice(0), {
 							before: function() {
 								// new level of scope
-								scope = new Scope(scope, {
+								scope = new Scope(scope, node.locallyDefined, {
 									name: node.name.value,
 									args: node.args.map(function(arg) {
 										return arg.value;
@@ -742,8 +742,7 @@ exports.Interpreter = (function() {
 
 								// create function argument variables
 								for (var i = 0, l = Math.min(node.args.length, callArgValues.value.length); i < l; i++) {
-									var forceLocal = true;
-									scope.set(node.args[i], callArgValues.value[i], forceLocal);
+									scope.set(node.args[i], callArgValues.value[i]);
 								}
 
 								// update scope listeners

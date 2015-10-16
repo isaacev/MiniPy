@@ -8,6 +8,8 @@ exports.Parser = (function() {
 	var TokenType = enums.TokenType;
 	var ValueType = enums.ValueType;
 
+	var localVariables = [[]];
+
 	function Parser(lexer) {
 		var self = this;
 		this.lexer = lexer;
@@ -23,6 +25,8 @@ exports.Parser = (function() {
 				Program: function(block) {
 					this.type = 'Program';
 					this.body = block;
+
+					this.locallyDefined = localVariables[0];
 
 					this.error = function(details) {
 						return this.body.range.error(details);
@@ -64,6 +68,15 @@ exports.Parser = (function() {
 					this.operator = operator;
 					this.left = operandLeft;
 					this.right = operandRight;
+
+					if (this.type === 'AssignmentExpression' && this.left.type === 'Identifier') {
+						var localStaticScope = localVariables[localVariables.length - 1];
+
+						if (localStaticScope.indexOf(this.left.value) === -1) {
+							// local variable has not been recorded to the static scope record yet
+							localStaticScope.push(this.left.value);
+						}
+					}
 
 					this.range = operandLeft.range.union(operandRight.range);
 
@@ -170,6 +183,15 @@ exports.Parser = (function() {
 					this.name = name;
 					this.args = args;
 					this.block = block;
+
+					// copy then clear the local variables list
+					var locals = localVariables.splice(localVariables.length - 1, 1);
+
+					if (locals instanceof Array && locals.length > 0) {
+						this.locallyDefined = locals[0];
+					} else {
+						this.locallyDefined = [];
+					}
 
 					this.range = defKeyword.range.union(block.range);
 
@@ -474,6 +496,10 @@ exports.Parser = (function() {
 
 						self.next(TokenType.PUNCTUATOR, ':');
 						self.next(TokenType.NEWLINE);
+
+						localVariables.push(args.map(function(arg) {
+							return arg.value;
+						}));
 
 						var block = self.parseBlock();
 

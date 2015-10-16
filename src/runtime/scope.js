@@ -32,8 +32,9 @@ exports.Scope = (function() {
 		}
 	}
 
-	function Scope(parent, details) {
+	function Scope(parent, locallyDefined, details) {
 		this.parent = parent;
+		this.locallyDefined = locallyDefined;
 		this.details = details || null;
 
 		if (this.parent === null) {
@@ -72,6 +73,15 @@ exports.Scope = (function() {
 				return this.locals[name];
 			}
 		} else {
+			if (this.locallyDefined.indexOf(name) > -1) {
+				// variable with `name` WILL be defined locally in this scope but hasn't
+				// yet which is a static scope error
+				throw node.error({
+					type: ErrorType.UNDEFINED_VARIABLE,
+					message: 'Variable "' + name + '" has not been locally defined yet',
+				});
+			}
+
 			// this scope doesn't own the variable, check with the parent scope
 			// or throw an error if it doesn't exist
 			if (this.parent instanceof Scope) {
@@ -85,39 +95,13 @@ exports.Scope = (function() {
 		}
 	};
 
-	Scope.prototype.set = function(node, value, forceLocal) {
+	Scope.prototype.set = function(node, value) {
 		var name = node.value || node.toString();
 
-		if (forceLocal === true) {
-			// variable is forced to be created locally (usually
-			// for function arguments)
-			if (this.isGlobalScope()) {
-				this.globals[name] = value;
-			} else {
-				this.locals[name] = value;
-			}
-		} else if (this.exists(name)) {
-			// variable already created, modify its value where it resides
-			if (this.owns(name)) {
-				if (this.isGlobalScope()) {
-					this.globals[name] = value;
-				} else {
-					this.locals[name] = value;
-				}
-			} else {
-				if (this.isGlobalScope()) {
-					this.globals[name] = value;
-				} else {
-					this.parent.set(node, value);
-				}
-			}
+		if (this.isGlobalScope()) {
+			this.globals[name] = value;
 		} else {
-			// variable doesn't exist anywhere already, create it locally
-			if (this.isGlobalScope()) {
-				this.globals[name] = value;
-			} else {
-				this.locals[name] = value;
-			}
+			this.locals[name] = value;
 		}
 	};
 
