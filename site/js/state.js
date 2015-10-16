@@ -1,8 +1,6 @@
 // [MiniPy] /site/js/state.js
 
 var State = (function(scopeElementList, stdoutElementList) {
-	var knownVariables = {};
-
 	var printTemplate = '<li>{value}<span class="origin">{line}</span></li>';
 	var variableTemplate = '<li data-identifier="{identifier}"><span class="identifier">{identifier}</span>{value}</li>';
 	var valueTemplate = '<span class="{type}">{value}</span>';
@@ -96,7 +94,6 @@ var State = (function(scopeElementList, stdoutElementList) {
 	}
 
 	function reset() {
-		knownVariables = {};
 		scopeElementList.empty();
 		stdoutElementList.empty();
 	}
