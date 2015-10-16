@@ -5,6 +5,7 @@ var gulp = require('gulp');
 // required for `build` task
 var concat = require('gulp-concat-util');
 var formatter = require('gulp-esformatter');
+var rename = require('gulp-rename');
 
 var package = require('./package.json');
 
@@ -12,7 +13,7 @@ var package = require('./package.json');
 var bump = require('gulp-bump');
 
 gulp.task('build', function() {
-	gulp.src([
+	var stream = gulp.src([
 		// header partial
 		'src/partials/header.js',
 
@@ -46,10 +47,18 @@ gulp.task('build', function() {
 		.pipe(concat.header('// MiniPy.js v' + package.version + '\n'))
 		.pipe(formatter({ indent: { value: '	', }, }))
 		.pipe(gulp.dest('build'));
+
+	return stream;
 });
 
 gulp.task('bump', function() {
 	gulp.src(['./package.json', './bower.json'])
 		.pipe(bump())
 		.pipe(gulp.dest('./'));
+});
+
+gulp.task('dist', ['build'], function() {
+	gulp.src('./build/' + package.version + '.js')
+		.pipe(rename('minipy.js'))
+		.pipe(gulp.dest('./dist'));
 });
