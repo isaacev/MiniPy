@@ -92,6 +92,17 @@
 	background-position: -72px -54px;
 }
 
+.mp-controls .mp-control-preset-select {
+	height: 40px;
+	margin: 23px 12px;
+	display: block;
+	float: right;
+}
+
+.mp-controls .mp-control-preset-select:focus {
+	outline: none;
+}
+
 .mp-debugger {
 	position: absolute;
 	top: 80px;

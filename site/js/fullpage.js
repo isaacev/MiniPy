@@ -1,10 +1,24 @@
 // [MiniPy] /site/js/app.js
 
+var presets = [
+	'',
+
+	'# supports the 3 basic Python types...\nplanet = "Earth"\nanswer = 42\nmostly_harmless = True\n\n# ...and lists\nnames = ["Arthur", "Zaphod", "Marvin"]\n\n\n# lists and strings can be inspected using indices and slices\nplanet[0] == "E"\nplanet[-1] == "h"\nnames[1][0:3] == "Zap"\n\n# there are also English boolean operations for working\n# with boolean values\nFalse == not mostly_harmless\nTrue == (answer == 42) or (names[0] == "Arthur")',
+
+	'truth = True\nlies = False\n\nif truth:\n\tprint("Seems legit")\nelse:\n\tprint("Pants on fire")\n\n\nsummation = 0\nnumbers = [1, 1, 2, 3, 5, 8, 13, 21]\n\nwhile len(numbers) > 0:\n\tsummation = summation + numbers[0]\n\tdel numbers[0]\n\nprint("summation: " + str(summation))',
+
+	'def reverse(old):\n\tnew = ""\n\tindex = len(old) - 1\n\t\n\twhile index >= 0:\n\t\tnew = new + old[index]\n\t\tindex = index - 1\n\t\n\treturn new\n\ndef greet(name):\n\tbackwards = reverse(name)\n\tprint("Hello, " + backwards + "!")\n\ngreet("dlrow")',
+
+	'# this program runs programs comprised of simple\n# Scheme arithmetic operations\n\n# evalutes to 9\nprogram = "(/ (* 3 (+ 2 2 (- 8 6))) 2)"\n\ndef nextTokenFromIndex(program, index):\n\t# consume a token (series of non-whitespace,\n\t# non-paren characters)\n\tstartIndex = index\n\t\n\tif index < len(program):\n\t\tnext = program[index]\n\telse:\n\t\treturn ["", len(program)]\n\t\n\twhile (next != " ") and (next != "(") and (next != ")"):\n\t\tindex = index + 1\n\t\t\n\t\tif index < len(program):\n\t\t\tnext = program[index]\n\t\telse:\n\t\t\t# token reaches end of program\n\t\t\treturn [program[startIndex:index], index]\n\t\n\tif startIndex == index:\n\t\t# character encountered was not a legal token character\n\t\t# either whitespace or a paren or the end of the program\n\t\tif index < len(program):\n\t\t\t# not the end of the program\n\t\t\tif program[index] == " ":\n\t\t\t\t# is whitespace\n\t\t\t\treturn nextTokenFromIndex(program, index + 1)\n\t\t\telse:\n\t\t\t\t# is paren\n\t\t\t\treturn [program[index], index + 1]\n\t\telse:\n\t\t\t# emit array representing the end of the program\n\t\t\treturn ["", len(program)]\n\telse:\n\t\treturn [program[startIndex:index], index]\n\ndef pop(tokens):\n\tif len(tokens) > 0:\n\t\ttoken = tokens[0]\n\t\ttokens[0:1] = []\n\t\treturn token\n\telse:\n\t\treturn ["", len(program)]\n\ndef parse(tokens):\n\ttok = pop(tokens)\n\texpressions = []\n\n\twhile (tok[0] != "") and (tok[0] != ")"):\n\t\tif tok[0] == "(":\n\t\t\t# start of sub-expression\n\t\t\texpressions = expressions + [parse(tokens)]\n\n\t\t\t# consume end paren\n\t\t\ttok = pop(tokens)\n\t\telse:\n\t\t\texpressions = expressions + [tok[0]]\n\t\t\ttok = pop(tokens)\n\n\treturn expressions\n\ndef evaluate(ast):\n\tif isType(ast, "string"):\n\t\treturn float(ast)\n\telse:\n\t\top = ast[0]\n\n\t\tif (op == "+") or (op == "-") or (op == "*") or (op == "/"):\n\t\t\t# handle basic arithmetic\n\t\t\t# loop over arguments, convert them to floats\n\t\t\t# and combine them\n\t\t\t\n\t\t\t# set operation-specific start value\n\t\t\tif (op == "+") or (op == "-"):\n\t\t\t\ttotal = 0\n\t\t\telif (op == "*") or (op == "/"):\n\t\t\t\ttotal = 1\n\n\t\t\targIndex = 1 # starts at 1 to account for operator\n\n\t\t\twhile argIndex < len(ast):\n\t\t\t\targ = evaluate(ast[argIndex])\n\n\t\t\t\t# combine\n\t\t\t\tif op == "+":\n\t\t\t\t\ttotal = total + arg\n\t\t\t\telif op == "-":\n\t\t\t\t\tif argIndex == 1:\n\t\t\t\t\t\tif len(ast) == 2:\n\t\t\t\t\t\t\treturn -arg\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\ttotal = arg\n\t\t\t\t\telse:\n\t\t\t\t\t\ttotal = total - arg\n\t\t\t\telif op == "*":\n\t\t\t\t\ttotal = total * arg\n\t\t\t\telif op == "/":\n\t\t\t\t\tif argIndex == 1:\n\t\t\t\t\t\tif len(ast) == 2:\n\t\t\t\t\t\t\treturn 1 / arg\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\ttotal = arg\n\t\t\t\t\telse:\n\t\t\t\t\t\ttotal = total / arg\n\t\t\t\t\n\t\t\t\targIndex = argIndex + 1\n\t\t\t\t\n\t\t\treturn total\n\t\telse:\n\t\t\tprint("unrecognized function: \'" + op + "\'")\n\ndef scheme(program):\n\ttokens = []\n\ttok = nextTokenFromIndex(program, 0)\n\n\twhile tok[0] != "":\n\t\ttokens = tokens + [tok]\n\t\ttok = nextTokenFromIndex(program, tok[1])\n\n\tast = parse(tokens)\n\treturn evaluate(ast[0])\n\nprint(scheme(program))'
+];
+
+var currentPreset = 4;
+
 var cm = CodeMirror(document.querySelector('.mp-editor'), {
 	mode: 'python',
 	theme: 'neat',
 
-	value: '# this program runs programs comprised of simple\n# Scheme arithmetic operations\n#\n# for example: (/ (* 3 (+ 2 2 (- 8 6))) 2) evaluates to 9\n\ndef nextTokenFromIndex(program, index):\n\t# consume a token (series of non-whitespace,\n\t# non-paren characters)\n\tstartIndex = index\n\t\n\tif index < len(program):\n\t\tnext = program[index]\n\telse:\n\t\treturn ["", len(program)]\n\t\n\twhile (next != " ") and (next != "(") and (next != ")"):\n\t\tindex = index + 1\n\t\t\n\t\tif index < len(program):\n\t\t\tnext = program[index]\n\t\telse:\n\t\t\t# token reaches end of program\n\t\t\treturn [program[startIndex:index], index]\n\t\n\tif startIndex == index:\n\t\t# character encountered was not a legal token character\n\t\t# either whitespace or a paren or the end of the program\n\t\tif index < len(program):\n\t\t\t# not the end of the program\n\t\t\tif program[index] == " ":\n\t\t\t\t# is whitespace\n\t\t\t\treturn nextTokenFromIndex(program, index + 1)\n\t\t\telse:\n\t\t\t\t# is paren\n\t\t\t\treturn [program[index], index + 1]\n\t\telse:\n\t\t\t# emit array representing the end of the program\n\t\t\treturn ["", len(program)]\n\telse:\n\t\treturn [program[startIndex:index], index]\n\ndef pop(tokens):\n\tif len(tokens) > 0:\n\t\ttoken = tokens[0]\n\t\ttokens[0:1] = []\n\t\treturn token\n\telse:\n\t\treturn ["", len(program)]\n\ndef parse(tokens):\n\ttok = pop(tokens)\n\texpressions = []\n\n\twhile (tok[0] != "") and (tok[0] != ")"):\n\t\tif tok[0] == "(":\n\t\t\t# start of sub-expression\n\t\t\texpressions = expressions + [parse(tokens)]\n\n\t\t\t# consume end paren\n\t\t\ttok = pop(tokens)\n\t\telse:\n\t\t\texpressions = expressions + [tok[0]]\n\t\t\ttok = pop(tokens)\n\n\treturn expressions\n\ndef evaluate(ast):\n\tif isType(ast, "string"):\n\t\treturn float(ast)\n\telse:\n\t\top = ast[0]\n\n\t\tif (op == "+") or (op == "-") or (op == "*") or (op == "/"):\n\t\t\t# handle basic arithmetic\n\t\t\t# loop over arguments, convert them to floats\n\t\t\t# and combine them\n\t\t\t\n\t\t\t# set operation-specific start value\n\t\t\tif (op == "+") or (op == "-"):\n\t\t\t\ttotal = 0\n\t\t\telif (op == "*") or (op == "/"):\n\t\t\t\ttotal = 1\n\n\t\t\targIndex = 1 # starts at 1 to account for operator\n\n\t\t\twhile argIndex < len(ast):\n\t\t\t\targ = evaluate(ast[argIndex])\n\n\t\t\t\t# combine\n\t\t\t\tif op == "+":\n\t\t\t\t\ttotal = total + arg\n\t\t\t\telif op == "-":\n\t\t\t\t\tif argIndex == 1:\n\t\t\t\t\t\tif len(ast) == 2:\n\t\t\t\t\t\t\treturn -arg\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\ttotal = arg\n\t\t\t\t\telse:\n\t\t\t\t\t\ttotal = total - arg\n\t\t\t\telif op == "*":\n\t\t\t\t\ttotal = total * arg\n\t\t\t\telif op == "/":\n\t\t\t\t\tif argIndex == 1:\n\t\t\t\t\t\tif len(ast) == 2:\n\t\t\t\t\t\t\treturn 1 / arg\n\t\t\t\t\t\telse:\n\t\t\t\t\t\t\ttotal = arg\n\t\t\t\t\telse:\n\t\t\t\t\t\ttotal = total / arg\n\t\t\t\t\n\t\t\t\targIndex = argIndex + 1\n\t\t\t\t\n\t\t\treturn total\n\t\telse:\n\t\t\tprint("unrecognized function: \'" + op + "\'")\n\ndef scheme(program):\n\ttokens = []\n\ttok = nextTokenFromIndex(program, 0)\n\n\twhile tok[0] != "":\n\t\ttokens = tokens + [tok]\n\t\ttok = nextTokenFromIndex(program, tok[1])\n\n\tast = parse(tokens)\n\treturn evaluate(ast[0])\n\nprint(scheme("(/ (* 3 (+ 2 2 (- 8 6))) 2)"))\nprint(scheme("(+ -5)"))',
+	value: presets[currentPreset],
 
 	lineNumbers: true,
 	indentUnit: 4,
@@ -144,8 +158,11 @@ var defaultPythonGlobals = {
 		var markedLine = null;
 
 		return function(line) {
-			if (line === null && markedLine !== null) {
-				markedLine.clear();
+			if (line === null) {
+				if (markedLine !== null) {
+					markedLine.clear();
+				}
+
 				return;
 			}
 
@@ -176,6 +193,20 @@ var defaultPythonGlobals = {
 			}
 		};
 	}());
+
+	// listen for script preset changes
+	$('.mp-control-preset-select').change(function() {
+		enableButtons();
+
+		highlightLine(null);
+		StateHandler.reset();
+		unlockEditor();
+
+		when('step', startStepping);
+
+		currentPreset = $(this).val();
+		mirror.setValue(presets[currentPreset]);
+	});
 
 	function lockEditor() {
 		$('.mp-editor').addClass('locked');
@@ -374,8 +405,10 @@ var defaultPythonGlobals = {
 		StateHandler.reset();
 		unlockEditor();
 
+		when('step', startStepping);
+
 		if (typeof globalDefaultScript === 'undefined' || typeof globalDefaultScript !== 'string') {
-			mirror.setValue('');
+			mirror.setValue(presets[currentPreset]);
 		} else {
 			mirror.setValue(globalDefaultScript);
 		}
