@@ -1,0 +1,28 @@
+{
+  "name": "minipy",
+  "version": "1.5.1",
+  "description": "a subset of Python build in JavaScript with an interpreter for learning about programming",
+  "main": "build/minipy.js",
+  "directories": {
+    "test": "test"
+  },
+  "dependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/isaacev/MiniPy.git"
+  },
+  "devDependencies": {
+    "chai": "^3.2.0",
+    "gulp": "^3.9.0",
+    "gulp-bump": "^0.3.1",
+    "gulp-concat-util": "^0.5.2",
+    "gulp-esformatter": "^4.0.0",
+    "gulp-rename": "^1.2.2"
+  },
+  "scripts": {
+    "test": "mocha",
+    "postinstall": "gulp"
+  },
+  "author": "Isaac Evavold <nomadicbit@gmail.com>",
+  "license": "MIT"
+}
