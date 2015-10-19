@@ -568,12 +568,12 @@ exports.Parser = (function() {
 		infix('and', 30);
 		infix('or', 30);
 
-		infix('>', 30);
-		infix('>=', 30);
-		infix('<', 30);
-		infix('<=', 30);
-		infix('==', 30);
-		infix('!=', 30);
+		infix('>', 40);
+		infix('>=', 40);
+		infix('<', 40);
+		infix('<=', 40);
+		infix('==', 40);
+		infix('!=', 40);
 
 		infix('+', 50);
 		infix('-', 50);
