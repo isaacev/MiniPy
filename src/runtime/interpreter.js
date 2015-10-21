@@ -1,4 +1,4 @@
-// [MiniPy] /src/runtime/Interpreter.js
+// [MiniPy] /src/runtime/interpreter.js
 
 exports.Interpreter = (function() {
 	// require type enumerations

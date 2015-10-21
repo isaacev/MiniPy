@@ -1,4 +1,4 @@
-// [MiniPy] /src/runtime/Scope.js
+// [MiniPy] /src/runtime/scope.js
 
 exports.Scope = (function() {
 	// require type enumerations

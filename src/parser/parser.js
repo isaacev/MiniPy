@@ -1,4 +1,4 @@
-// [MiniPy] /src/parser/Parser.js
+// [MiniPy] /src/parser/parser.js
 
 exports.Parser = (function() {
 	// require type enumerations

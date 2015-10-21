@@ -1,4 +1,4 @@
-// [MiniPy] /src/parser/Scanner.js
+// [MiniPy] /src/parser/scanner.js
 
 exports.Scanner = (function() {
 	var MiniPyError = require('../error/error').MiniPyError;

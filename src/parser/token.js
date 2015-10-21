@@ -1,4 +1,4 @@
-// [MiniPy] /src/parser/Token.js
+// [MiniPy] /src/parser/token.js
 
 exports.Token = (function() {
 	// require type enumerations
