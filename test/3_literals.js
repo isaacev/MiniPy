@@ -149,6 +149,9 @@ describe('Literals', function() {
 				isValid('[ "a", 2, "c" ]');
 			});
 
+			// allow arbitrary newlines to exist in array literal
+			// allow arbitrary indents to exist in array literal
+
 			it('should allow arrays with hanging commas', function() {
 				isValid('[ 1, 2, 3, 4, ]');
 				isValid('[1,]');
@@ -163,6 +166,18 @@ describe('Literals', function() {
 				isValid('a = [1,]');
 				isValid('a = [1, 2, 3]');
 			});
+		});
+	});
+
+	describe('Dictionary', function () {
+		describe('Initialization', function () {
+			// create an empty dictionary
+			// create a simple dictionary with literals and multiple types
+			// create a simple dictionary with identifiers as arguments
+			// allow arbitrary newlines to exist in dictionary literal
+			// allow arbitrary indents to exist in dictionary literal
+			// allow dictionary literals hanging commas
+			// permit dictionary literal assignment
 		});
 	});
 });
