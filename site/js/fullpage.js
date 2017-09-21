@@ -190,6 +190,7 @@ var defaultPythonGlobals = {
 					startStyle: 'mp-active-line-left',
 					endStyle: 'mp-active-line-right',
 				});
+				mirror.scrollIntoView({ line: line, ch: 0 }, 100);
 			}
 		};
 	}());
